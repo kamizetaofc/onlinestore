@@ -1,0 +1,3 @@
+# Política de Privacidade — Kamizeta
+
+Atualizada em 25 de outubro de 2026. Podemos tratar nome, CPF, e-mail, telefone, endereço, dados da conta, lista de desejos, carrinho, pedidos e identificadores de pagamento/entrega para cadastro, atendimento, compras, logística e obrigações legais. Dados estritamente necessários podem ser compartilhados com Supabase, InfinitePay, Uber Entregas e Google Drive conforme a operação real. Aplicamos controles de acesso; dados podem ser retidos pelo prazo legal. O titular pode solicitar acesso, correção e exclusão quando aplicável, respeitadas as exceções legais. Contato: [E-MAIL OFICIAL A INFORMAR]. Revisar antes do lançamento comercial.

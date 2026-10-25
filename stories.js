@@ -1,0 +1,1 @@
+import{supabase}from'./supabaseClient.js';export async function loadStories(){const{data,error}=await supabase.from('stories').select('*').eq('is_active',true).or('published_at.is.null,published_at.lte.'+new Date().toISOString()).or('expires_at.is.null,expires_at.gt.'+new Date().toISOString()).order('created_at');if(error)console.warn(error.message);return data||[]}
