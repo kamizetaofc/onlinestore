@@ -3,3 +3,5 @@
 .product-form label:has(input[type="checkbox"]){display:flex;align-items:center;gap:8px}
 .admin input[type="checkbox"]{width:16px;height:16px;padding:0;margin:0;flex:0 0 auto}
 .gallery button:disabled{opacity:.65;cursor:not-allowed}
+
+.admin-loader{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(8,8,8,.9);color:#fff;font-size:14px;text-align:center;padding:24px}.admin-loader[hidden]{display:none!important}.admin-loader img{width:64px;height:64px;object-fit:contain}.admin-status{min-height:0;padding:0;margin:10px 0;color:#d7ffd9}.admin-status:not(:empty){padding:12px 14px;border:1px solid #315b38;background:#142218;border-radius:8px}.admin-status.error{color:#ffd4d4;border-color:#6d3434;background:#281616}
