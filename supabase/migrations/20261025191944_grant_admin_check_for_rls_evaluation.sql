@@ -1,0 +1,1 @@
+grant execute on function public.is_store_admin() to anon, authenticated, service_role;
