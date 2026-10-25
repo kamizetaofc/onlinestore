@@ -25,6 +25,7 @@ jobs:
           mkdir -p _site/adm
           cp index.html style.css *.js aboutUs.md privacypolicy.md pagamento-concluido.html _site/
           if [ -f kamizeta.png ]; then cp kamizeta.png _site/; fi
+          if [ -f loader.gif ]; then cp loader.gif _site/; fi
           cp adm/index.html adm/script.js adm/style.css _site/adm/
           touch _site/.nojekyll
       - name: Upload Pages artifact
