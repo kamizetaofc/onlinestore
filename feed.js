@@ -15,7 +15,7 @@ async function loadMore(){
     if(!data?.length){finished=true;if(start===0)target.innerHTML='<p class="muted" style="padding:18px">Nenhum produto publicado no momento.</p>';return}
     offset+=data.length;if(data.length<30)finished=true;
     const ids=data.map(p=>p.id);
-    const{data:images,imageError}=await supabase.from('product_images').select('product_id,image_url,position').in('product_id',ids).order('position',{ascending:true});
+    const{data:images,error:imageError}=await supabase.from('product_images').select('product_id,image_url,position').in('product_id',ids).order('position',{ascending:true});
     if(imageError)console.warn('Não foi possível carregar imagens adicionais:',imageError);
     const firstImage=new Map();
     for(const item of images||[])if(!firstImage.has(item.product_id))firstImage.set(item.product_id,item.image_url);
