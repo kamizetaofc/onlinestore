@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.infinitepay-webhook]
 verify_jwt = false
+
+[functions.cancel-order]
+verify_jwt = true
