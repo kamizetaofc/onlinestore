@@ -30,12 +30,12 @@ export async function openCategoryStories(category){
     let i=0;
     function draw(){
       const p=all[i],im=p.product_images?.[0]?.image_url||p.image_url;
-      el.innerHTML='<div class="category-carousel-head"><div><p class="muted">CATEGORIA</p><h2>'+escapeHTML(category)+'</h2></div><span class="carousel-count">'+(i+1)+' / '+all.length+'</span></div><div class="category-slide">'+(im?'<img src="'+escapeHTML(im)+'" alt="'+escapeHTML(p.name)+'">':'<div class="category-slide-placeholder">Sem imagem</div>')+'<div class="category-slide-info"><h3>'+escapeHTML(p.name)+'</h3><p>'+escapeHTML(p.description||'')+'</p><strong>'+new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format((p.price_cents||0)/100)+'</strong><div class="category-slide-actions"><button id="previous-product" class="secondary" '+(i===0?'disabled':'')+' aria-label="Produto anterior"><i class="fa-solid fa-chevron-left"></i></button><button id="view-product" class="primary">Ver produto</button><button id="next-product" class="secondary" '+(i===all.length-1?'disabled':'')+' aria-label="Próximo produto"><i class="fa-solid fa-chevron-right"></i></button></div></div></div>';
-      el.querySelector('#previous-product').onclick=()=>{if(i>0){i--;draw()}};
-      el.querySelector('#next-product').onclick=()=>{if(i<all.length-1){i++;draw()}};
+      el.innerHTML='<div class="category-image-only">'+(im?'<img src="'+escapeHTML(im)+'" alt="'+escapeHTML(p.name)+'">':'<div class="category-slide-placeholder">Sem imagem</div>')+(all.length>1?'<button type="button" id="previous-product" class="category-image-arrow previous" '+(i===0?'disabled':'')+' aria-label="Produto anterior"><i class="fa-solid fa-chevron-left"></i></button><button type="button" id="next-product" class="category-image-arrow next" '+(i===all.length-1?'disabled':'')+' aria-label="Próximo produto"><i class="fa-solid fa-chevron-right"></i></button>':'')+'</div><button id="view-product" class="primary category-view-product">Ver produto</button>';
+      el.querySelector('#previous-product')?.addEventListener('click',()=>{if(i>0){i--;draw()}});
+      el.querySelector('#next-product')?.addEventListener('click',()=>{if(i<all.length-1){i++;draw()}});
       el.querySelector('#view-product').onclick=async()=>{d.close();const{openProduct}=await import('./feed.js');await openProduct(p.id)};
     }
-    draw();
+
   }catch(e){
     console.error('Erro ao abrir categoria:',e);
     el.innerHTML='<h2>'+escapeHTML(category)+'</h2><p class="muted">Não foi possível carregar os produtos desta categoria.</p><button id="retry-category-products" class="secondary">Tentar novamente</button>';

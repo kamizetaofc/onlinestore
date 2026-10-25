@@ -19,7 +19,7 @@ async function loadMore(){
     if(imageError)console.warn('Não foi possível carregar imagens adicionais:',imageError);
     const firstImage=new Map();
     for(const item of images||[])if(!firstImage.has(item.product_id))firstImage.set(item.product_id,item.image_url);
-    const html=data.map(p=>{const im=firstImage.get(p.id)||p.image_url;return'<button class="product-tile" data-product="'+escapeHTML(p.id)+'" aria-label="Ver '+escapeHTML(p.name)+'">'+(im?'<img loading="lazy" src="'+escapeHTML(im)+'" alt="'+escapeHTML(p.name)+'">':'<span>'+escapeHTML(p.name)+'</span>')+'<span class="tile-caption"><b>'+escapeHTML(p.name)+'</b><span>'+money(p.price_cents)+'</span></span></button>'}).join('');
+    const html=data.map(p=>{const im=firstImage.get(p.id)||p.image_url;return'<button class="product-tile" data-product="'+escapeHTML(p.id)+'" aria-label="Ver '+escapeHTML(p.name)+'">'+(im?'<img loading="lazy" src="'+escapeHTML(im)+'" alt="'+escapeHTML(p.name)+'">':'<span class="profile-no-image">'+escapeHTML(p.name)+'</span>')+'</button>'}).join('');
     target.insertAdjacentHTML('beforeend',html);
     target.querySelectorAll('[data-product]:not([data-bound])').forEach(b=>{b.dataset.bound='true';b.onclick=()=>openProduct(b.dataset.product)});
   }catch(e){console.error('Erro inesperado no feed:',e);if(start===0)target.innerHTML='<div class="feed-state"><p class="muted">Ocorreu um erro ao carregar os produtos.</p><button id="retry-feed" class="secondary">Tentar novamente</button></div>';target.querySelector('#retry-feed')?.addEventListener('click',()=>{offset=0;finished=false;target.innerHTML='';loadMore()})}
