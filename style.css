@@ -96,3 +96,8 @@
  .product-icon-actions button{font-size:24px}
  .category-image-only>img{max-height:60vh}
 }
+
+.product-options{display:flex;gap:12px;padding:0 12px 16px}
+.product-options label{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px}
+.product-options select,.product-options input{min-width:0;width:76px;padding:6px 8px;border:1px solid #444;border-radius:6px;background:#111;color:#fff}
+.product-options input{width:60px}
