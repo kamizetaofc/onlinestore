@@ -27,7 +27,7 @@ create or replace function public.set_updated_at() returns trigger language plpg
 create or replace function public.sync_product_category() returns trigger language plpgsql security invoker set search_path='' as $$ begin insert into public.categories(name,cover_image_url) values(new.category,new.image_url) on conflict(name) do update set cover_image_url=coalesce(public.categories.cover_image_url,excluded.cover_image_url),updated_at=now();return new;end;$$;
 create trigger products_sync_category after insert or update of category,image_url on public.products for each row execute function public.sync_product_category();
 create or replace function public.handle_new_auth_user() returns trigger language plpgsql security definer set search_path='' as $$ begin insert into public.profiles(user_id,full_name,email,phone,cpf) values(new.id,coalesce(new.raw_user_meta_data->>'full_name',''),new.email,nullif(new.raw_user_meta_data->>'phone',''),nullif(new.raw_user_meta_data->>'cpf','')) on conflict(user_id) do update set email=excluded.email;return new;end;$$;
-revoke all on function public.handle_new_auth_user() from public;
+revoke all on function public.handle_new_auth_user() from public, anon, authenticated;
 drop trigger if exists on_auth_user_created_kamizeta on auth.users;
 create trigger on_auth_user_created_kamizeta after insert on auth.users for each row execute function public.handle_new_auth_user();
 create or replace function public.is_store_admin() returns boolean language sql stable security invoker set search_path='' as $$ select coalesce((auth.jwt()->'app_metadata'->>'role')='admin',false);$$;
