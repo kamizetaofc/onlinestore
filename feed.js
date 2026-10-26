@@ -43,6 +43,10 @@ export async function openProduct(id){
       await new Promise(resolve=>setTimeout(resolve,300));
       result=await readProduct(id);
     }
+    if(result.error&&/jwt|token expired|invalid claim/i.test(String(result.error.message||''))){
+      await withTimeout(supabase.auth.refreshSession(),5000,'Não foi possível renovar sua sessão.');
+      result=await readProduct(id);
+    }
     if(result.error)throw result.error;
     const p=result.data;
     if(!p){toast('Produto indisponível.');return false}
