@@ -1,32 +1,106 @@
-import{supabase,escapeHTML,money,toast,withTimeout}from'./supabaseClient.js';import{signIn,signUp,signOut}from'./auth.js';
-export function showLogin(){const d=document.querySelector('#auth-dialog'),el=document.querySelector('#auth-content');el.innerHTML='<h2>Entrar na Kamizeta</h2><form id="login"><label class="field">E-mail<input name="email" type="email" required></label><label class="field">Senha<input name="password" type="password" required></label><button class="primary">Entrar</button></form><p>Ainda não tem conta? <button id="signup" class="secondary">Crie uma</button></p>';el.querySelector('#login').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{await signIn(f.get('email'),f.get('password'));d.close();toast('Login realizado')}catch(x){toast(x.message)}};el.querySelector('#signup').onclick=()=>signupForm(el,d);d.showModal()}
-function signupForm(el,d){el.innerHTML='<h2>Criar conta</h2><form id="signup-form">'+[['full_name','Nome completo','text'],['cpf','CPF','text'],['phone','Telefone / WhatsApp','tel'],['email','E-mail','email'],['password','Senha','password'],['confirm','Confirmar senha','password']].map(([n,l,t])=>'<label class="field">'+l+'<input name="'+n+'" type="'+t+'" required '+(['password','confirm'].includes(n)?'minlength="8"':'')+'></label>').join('')+'<button class="primary">Criar conta</button></form>';el.querySelector('#signup-form').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);if(f.get('password')!==f.get('confirm'))return toast('As senhas não coincidem');try{await signUp({full_name:f.get('full_name'),cpf:f.get('cpf'),phone:f.get('phone'),email:f.get('email'),password:f.get('password')});d.close();toast('Conta criada; verifique seu e-mail se solicitado')}catch(x){toast(x.message)}};d.showModal()}
+import{supabase,escapeHTML,money,toast,withTimeout,showLoader,hideLoader}from'./supabaseClient.js';
+import{signIn,signUp,signOut}from'./auth.js';
+
+export function showLogin(notice=''){
+  const d=document.querySelector('#auth-dialog'),el=document.querySelector('#auth-content');
+  el.innerHTML='<h2>Entrar na Kamizeta</h2>'+(notice?'<p id="auth-feedback" class="form-feedback success" role="status">'+escapeHTML(notice)+'</p>':'<p id="auth-feedback" class="form-feedback" role="status" hidden></p>')+'<form id="login"><label class="field">E-mail<input name="email" type="email" autocomplete="email" required></label><label class="field">Senha<input name="password" type="password" autocomplete="current-password" required></label><button class="primary" type="submit">Entrar</button></form><p>Ainda não tem conta? <button type="button" id="signup" class="secondary">Crie uma</button></p>';
+  el.querySelector('#login').onsubmit=async e=>{
+    e.preventDefault();
+    const f=new FormData(e.currentTarget),feedback=el.querySelector('#auth-feedback'),button=e.currentTarget.querySelector('button[type="submit"]');
+    feedback.hidden=false;feedback.className='form-feedback';feedback.textContent='';
+    button.disabled=true;
+    try{await signIn(f.get('email'),f.get('password'));d.close();toast('Login realizado com sucesso.');}
+    catch(x){feedback.textContent=x?.message||'Não foi possível entrar. Confira seu e-mail e senha.';feedback.classList.add('error');}
+    finally{button.disabled=false}
+  };
+  el.querySelector('#signup').onclick=()=>signupForm(el,d);
+  d.showModal();
+}
+
+function signupForm(el,d){
+  el.innerHTML='<h2>Criar conta</h2><p id="signup-feedback" class="form-feedback" role="status" hidden></p><form id="signup-form">'+[['full_name','Nome completo','text'],['cpf','CPF','text'],['phone','Telefone / WhatsApp','tel'],['email','E-mail','email'],['password','Senha','password'],['confirm','Confirmar senha','password']].map(([n,l,t])=>'<label class="field">'+l+'<input name="'+n+'" type="'+t+'" required '+(['password','confirm'].includes(n)?'minlength="8"':'')+' '+(n==='email'?'autocomplete="email"':'')+' '+(n==='password'?'autocomplete="new-password"':'')+' '+(n==='confirm'?'autocomplete="new-password"':'')+'></label>').join('')+'<p id="password-mismatch" class="form-feedback error" role="alert" hidden>As senhas não coincidem. Digite a mesma senha nos dois campos.</p><button class="primary" type="submit">Criar conta</button><button class="secondary" type="button" id="back-login">Já tenho conta</button></form>';
+  const form=el.querySelector('#signup-form'),pass=form.elements.password,confirm=form.elements.confirm,warning=el.querySelector('#password-mismatch'),feedback=el.querySelector('#signup-feedback'),submit=form.querySelector('button[type="submit"]');
+  const checkPasswords=()=>{const mismatch=!!confirm.value&&pass.value!==confirm.value;warning.hidden=!mismatch;confirm.setCustomValidity(mismatch?'As senhas não coincidem.':'');return !mismatch};
+  pass.addEventListener('input',checkPasswords);confirm.addEventListener('input',checkPasswords);
+  form.onsubmit=async e=>{
+    e.preventDefault();
+    feedback.hidden=true;feedback.textContent='';checkPasswords();
+    if(pass.value!==confirm.value){warning.hidden=false;confirm.focus();return}
+    if(!form.reportValidity())return;
+    const f=new FormData(form);
+    submit.disabled=true;
+    showLoader('Criando sua conta…');
+    try{
+      const result=await signUp({full_name:f.get('full_name'),cpf:f.get('cpf'),phone:f.get('phone'),email:f.get('email'),password:f.get('password')});
+      d.close();
+      const message=result?.data?.user&&!result?.data?.session?'Conta criada. Confira seu e-mail para confirmar o cadastro e depois entre.':'Conta criada com sucesso. Entre com seu e-mail e senha.';
+      showLogin(message);
+    }catch(x){
+      feedback.hidden=false;feedback.className='form-feedback error';feedback.textContent=x?.message||'Não foi possível criar a conta. Tente novamente.';
+    }finally{hideLoader();submit.disabled=false}
+  };
+  el.querySelector('#back-login').onclick=()=>showLogin();
+  d.showModal();
+}
+
+const profileInput=(name,label,value,type='text',extra='')=>'<label class="field">'+label+'<input name="'+name+'" type="'+type+'" value="'+escapeHTML(value||'')+'" '+extra+'></label>';
+const terminalOrderStatuses=new Set(['cancelled','canceled','completed','delivered','refunded','failed','closed']);
+function orderCard(o){
+  const items=(o.order_items||[]).map(i=>'<p class="muted">'+escapeHTML(i.product_name)+' · '+i.quantity+'x · '+escapeHTML(i.size)+' · '+money(i.unit_price_cents*i.quantity)+'</p>').join('');
+  const cancel=['awaiting_payment','created'].includes(String(o.order_status||'').toLowerCase())?'<button type="button" class="secondary" data-cancel-order="'+escapeHTML(o.id)+'">Cancelar pedido</button>':'';
+  return '<article class="profile-order"><div class="profile-order-top"><b>Pedido '+escapeHTML(o.order_nsu||'')+'</b><strong>'+money(o.total_cents)+'</strong></div><p>Pedido: '+escapeHTML(o.order_status)+' · Pagamento: '+escapeHTML(o.payment_status)+'</p><p class="muted">'+(o.created_at?new Date(o.created_at).toLocaleString('pt-BR'):'')+' · '+(o.fulfillment_method==='delivery'?'Entrega':'Retirada')+'</p>'+items+cancel+'</article>';
+}
+
 export async function renderProfile(el){
-  el.innerHTML='<section class="public-profile"><h2>kamizeta</h2><p class="muted">Produtos publicados</p><div id="profile-product-grid" class="feed-grid profile-product-grid"><p class="muted">Carregando produtos…</p></div></section><section id="profile-account"></section>';
-  const grid=el.querySelector('#profile-product-grid'),account=el.querySelector('#profile-account');
+  const{data:{user},error:authError}=await withTimeout(supabase.auth.getUser(),10000,'Não foi possível confirmar sua sessão. Tente entrar novamente.');
+  if(authError||!user){showLogin('Entre na sua conta para visualizar seu perfil.');return}
+  el.innerHTML='<section class="private-profile"><header class="private-profile-heading"><img src="./kamizeta.png" alt="Kamizeta" onerror="this.hidden=true"><div><h2>Meu perfil</h2><p>'+escapeHTML(user.email||'')+'</p></div></header><p id="profile-feedback" class="form-feedback" role="status" hidden></p><form id="profile-form" class="profile-data-form"><h3>Dados pessoais</h3>'+profileInput('full_name','Nome completo',user.user_metadata?.full_name||'','text','autocomplete="name" required')+profileInput('cpf','CPF','','text','inputmode="numeric"')+profileInput('phone','Telefone / WhatsApp','','tel','autocomplete="tel"')+profileInput('instagram','Instagram','','text','')+'<p class="profile-readonly-email">E-mail: <b>'+escapeHTML(user.email||'')+'</b></p><h3>Endereço</h3>'+profileInput('address_line','Rua', '', 'text','autocomplete="street-address"')+profileInput('address_number','Número','','text','')+profileInput('address_complement','Complemento','','text','')+profileInput('neighborhood','Bairro','','text','')+profileInput('city','Cidade','','text','autocomplete="address-level2"')+profileInput('state','Estado (UF)','','text','maxlength="2" autocomplete="address-level1"')+profileInput('postal_code','CEP','','text','autocomplete="postal-code"')+'<button type="submit" class="primary">Salvar meus dados</button></form><section class="profile-password"><h3>Senha</h3><p>Por segurança, sua senha nunca é exibida.</p><button type="button" id="show-new-password" class="secondary">Definir nova senha</button><form id="new-password-form" class="profile-data-form" hidden><label class="field">Nova senha<input name="password" type="password" minlength="8" autocomplete="new-password" required></label><label class="field">Confirmar nova senha<input name="confirm" type="password" minlength="8" autocomplete="new-password" required></label><p id="new-password-error" class="form-feedback error" role="alert" hidden>As senhas não coincidem.</p><button class="primary" type="submit">Atualizar senha</button></form></section><section class="profile-orders"><h3>Meus pedidos</h3><div class="profile-order-tabs"><button type="button" class="active" data-orders-view="current">Pedidos atuais</button><button type="button" data-orders-view="history">Histórico</button></div><div id="profile-orders-list"><p class="muted">Carregando pedidos…</p></div></section><section class="profile-wishlist"><h3>Lista de desejos</h3><div id="profile-wishlist-list"><p class="muted">Carregando lista…</p></div></section><button type="button" id="logout" class="secondary profile-logout"><i class="fa-solid fa-right-from-bracket"></i> Sair da conta</button></section>';
+  const form=el.querySelector('#profile-form'),feedback=el.querySelector('#profile-feedback'),passwordForm=el.querySelector('#new-password-form'),passwordError=el.querySelector('#new-password-error'),ordersList=el.querySelector('#profile-orders-list'),wishlistList=el.querySelector('#profile-wishlist-list');
   try{
-    const{data:products,error}=await withTimeout(supabase.from('products').select('id,name,image_url,price_cents,created_at').eq('is_published',true).order('created_at',{ascending:false}),12000,'Tempo esgotado ao carregar os produtos do perfil.');
-    if(error)throw error;
-    if(!products?.length){grid.innerHTML='<p class="muted">Ainda não há produtos publicados.</p>'}
-    else{
-      const ids=products.map(p=>p.id);
-      const{data:images,error:imageError}=await withTimeout(supabase.from('product_images').select('product_id,image_url,position').in('product_id',ids).order('position',{ascending:true}),12000,'Tempo esgotado ao carregar as imagens do perfil.');
-      if(imageError)console.warn('Imagens adicionais do perfil não carregadas:',imageError);
-      const first=new Map();for(const im of images||[])if(!first.has(im.product_id))first.set(im.product_id,im.image_url);
-      grid.innerHTML=products.map(p=>{const image=first.get(p.id)||p.image_url;return '<button type="button" class="profile-product-tile" data-product="'+escapeHTML(p.id)+'" aria-label="Ver produto: '+escapeHTML(p.name)+'">'+(image?'<img loading="lazy" src="'+escapeHTML(image)+'" alt="'+escapeHTML(p.name)+'">':'<span class="profile-no-image">'+escapeHTML(p.name)+'</span>')+'</button>'}).join('');
-      grid.querySelectorAll('[data-product]').forEach(b=>b.onclick=async()=>{const{openProduct}=await import('./feed.js');await openProduct(b.dataset.product)});
-    }
-  }catch(e){console.error('Erro ao carregar produtos do perfil:',e);grid.innerHTML='<div class="feed-state"><p class="muted">Não foi possível carregar os produtos do perfil.</p><button id="retry-profile-products" class="secondary">Tentar novamente</button></div>';grid.querySelector('#retry-profile-products').onclick=()=>renderProfile(el)}
-  const{data:{user}}=await supabase.auth.getUser();
-  if(!user){account.innerHTML='<div class="profile-account-prompt"><h3>Seu perfil</h3><p>Entre para ver seus dados, pedidos e lista de desejos.</p><button id="profile-login" class="primary"><i class="fa-solid fa-right-to-bracket"></i> Entrar</button></div>';account.querySelector('#profile-login').onclick=showLogin;return}
-  const[{data:p},{data:orders},{data:wishes}]=await Promise.all([
-    supabase.from('profiles').select('*').eq('user_id',user.id).maybeSingle(),
-    supabase.from('orders').select('id,order_nsu,total_cents,order_status,payment_status,fulfillment_method,shipping_cents,created_at,order_items(product_name,quantity,size,unit_price_cents)').order('created_at',{ascending:false}),
-    supabase.from('wishlist').select('product_id,products(id,name,price_cents,image_url)').order('created_at',{ascending:false})
-  ]);
-  account.innerHTML='<div class="profile-account-details"><h3>Minha conta</h3><p><b>'+escapeHTML(p?.full_name||user.user_metadata?.full_name||'')+'</b></p><p>E-mail: '+escapeHTML(user.email)+'</p><p>Telefone: '+escapeHTML(p?.phone||'Não informado')+'</p><p>Endereço: '+escapeHTML([p?.address_line,p?.address_number,p?.address_complement,p?.neighborhood,p?.city,p?.state,p?.postal_code].filter(Boolean).join(', ')||'Será salvo na primeira compra')+'</p><h3>Pedidos</h3>'+((orders||[]).map(o=>'<article class="cart-row"><div><b>'+escapeHTML(o.order_nsu)+'</b><p>'+money(o.total_cents)+' · '+escapeHTML(o.order_status)+' · pagamento '+escapeHTML(o.payment_status)+' · '+escapeHTML(o.fulfillment_method)+'</p>'+((o.order_items||[]).map(i=>'<p class="muted">'+escapeHTML(i.product_name)+' · '+i.quantity+'x · '+escapeHTML(i.size)+' · '+money(i.unit_price_cents*i.quantity)+'</p>').join(''))+(o.order_status==='awaiting_payment'||o.order_status==='created'?'<button class="secondary" data-cancel="'+o.id+'">Cancelar pedido</button>':'')+'</div></article>').join('')||'<p>Nenhum pedido.</p>')+'<h3>Lista de desejos</h3>'+((wishes||[]).map(w=>'<article class="cart-row">'+(w.products?.image_url?'<img src="'+escapeHTML(w.products.image_url)+'" alt="">':'')+'<div><b>'+escapeHTML(w.products?.name||'Produto indisponível')+'</b><p>'+money(w.products?.price_cents||0)+'</p><button class="secondary" data-open="'+(w.products?.id||'')+'">Ver produto</button> <button class="secondary" data-unlike="'+(w.products?.id||'')+'"><i class="fa-solid fa-heart"></i> Remover curtida</button></div></article>').join('')||'<p>Sem itens curtidos.</p>')+'<button id="logout" class="secondary"><i class="fa-solid fa-right-from-bracket"></i> Sair</button></div>';
-  account.querySelector('#logout').onclick=async()=>{await signOut();renderProfile(el)};
-  account.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=async()=>{if(!confirm('Cancelar este pedido?'))return;const{data,error}=await supabase.functions.invoke('cancel-order',{body:{order_id:b.dataset.cancel}});if(error){let info={};try{info=await error.context.json()}catch{}toast(info.message||info.error||'Não foi possível cancelar o pedido')}else toast('Pedido cancelado com sucesso.');renderProfile(el)});
-  account.querySelectorAll('[data-unlike]').forEach(b=>b.onclick=async()=>{const{error}=await supabase.from('wishlist').delete().eq('user_id',user.id).eq('product_id',b.dataset.unlike);if(error)toast('Não foi possível remover a curtida.');else{toast('Curtida removida com sucesso.');renderProfile(el)}});
-  account.querySelectorAll('[data-open]').forEach(b=>b.onclick=async()=>{if(!b.dataset.open)return;const{openProduct}=await import('./feed.js');await openProduct(b.dataset.open)});
+    const [profileResult,ordersResult,wishesResult]=await Promise.all([
+      withTimeout(supabase.from('profiles').select('full_name,cpf,phone,instagram,email,address_line,address_number,address_complement,neighborhood,city,state,postal_code').eq('user_id',user.id).maybeSingle(),10000,'Tempo esgotado ao carregar seu perfil.'),
+      withTimeout(supabase.from('orders').select('id,order_nsu,total_cents,order_status,payment_status,fulfillment_method,created_at,order_items(product_name,quantity,size,unit_price_cents)').eq('user_id',user.id).order('created_at',{ascending:false}),10000,'Tempo esgotado ao carregar seus pedidos.'),
+      withTimeout(supabase.from('wishlist').select('product_id,products(id,name,price_cents,image_url)').eq('user_id',user.id).order('created_at',{ascending:false}),10000,'Tempo esgotado ao carregar sua lista de desejos.')
+    ]);
+    if(profileResult.error)throw profileResult.error;
+    const p=profileResult.data||{};
+    for(const [name,value] of Object.entries({full_name:p.full_name||user.user_metadata?.full_name||'',cpf:p.cpf||'',phone:p.phone||'',instagram:p.instagram||'',address_line:p.address_line||'',address_number:p.address_number||'',address_complement:p.address_complement||'',neighborhood:p.neighborhood||'',city:p.city||'',state:p.state||'',postal_code:p.postal_code||''})){if(form.elements[name])form.elements[name].value=value}
+    if(ordersResult.error)throw ordersResult.error;
+    const orders=ordersResult.data||[];
+    const currentOrders=orders.filter(o=>!terminalOrderStatuses.has(String(o.order_status||'').toLowerCase())&&!terminalOrderStatuses.has(String(o.payment_status||'').toLowerCase()));
+    const historyOrders=orders.filter(o=>!currentOrders.includes(o));
+    const displayOrders=view=>{const list=view==='history'?historyOrders:currentOrders;ordersList.innerHTML=list.length?list.map(orderCard).join(''):'<p class="muted">'+(view==='history'?'Você ainda não tem pedidos anteriores.':'Você não tem pedidos em andamento.')+'</p>';ordersList.querySelectorAll('[data-cancel-order]').forEach(btn=>btn.onclick=async()=>{btn.disabled=true;showLoader('Cancelando pedido…');try{const{data,error}=await supabase.functions.invoke('cancel-order',{body:{order_id:btn.dataset.cancelOrder}});if(error){let info={};try{info=await error.context.json()}catch{}throw new Error(info.message||info.error||'Não foi possível cancelar o pedido.')}toast('Pedido cancelado.');await renderProfile(el)}catch(e){toast(e.message||'Não foi possível cancelar o pedido.');btn.disabled=false}finally{hideLoader()}})};
+    displayOrders('current');
+    el.querySelectorAll('[data-orders-view]').forEach(btn=>btn.onclick=()=>{el.querySelectorAll('[data-orders-view]').forEach(b=>b.classList.toggle('active',b===btn));displayOrders(btn.dataset.ordersView)});
+    if(wishesResult.error)throw wishesResult.error;
+    const wishes=wishesResult.data||[];
+    wishlistList.innerHTML=wishes.length?wishes.map(w=>'<article class="cart-row">'+(w.products?.image_url?'<img src="'+escapeHTML(w.products.image_url)+'" alt="">':'')+'<div><b>'+escapeHTML(w.products?.name||'Produto indisponível')+'</b><p>'+money(w.products?.price_cents||0)+'</p><button type="button" class="secondary" data-open-product="'+escapeHTML(w.products?.id||'')+'">Ver produto</button> <button type="button" class="secondary" data-remove-wish="'+escapeHTML(w.products?.id||'')+'" aria-label="Remover curtida" title="Remover curtida"><i class="fa-solid fa-heart-crack"></i></button></div></article>').join(''):'<p class="muted">Você ainda não curtiu produtos.</p>';
+    wishlistList.querySelectorAll('[data-remove-wish]').forEach(btn=>btn.onclick=async()=>{if(!btn.dataset.removeWish)return;showLoader('Atualizando lista…');try{const{error}=await supabase.from('wishlist').delete().eq('user_id',user.id).eq('product_id',btn.dataset.removeWish);if(error)throw error;toast('Curtida removida.');await renderProfile(el)}catch(e){toast('Não foi possível remover a curtida.');}finally{hideLoader()}});
+    wishlistList.querySelectorAll('[data-open-product]').forEach(btn=>btn.onclick=async()=>{if(!btn.dataset.openProduct)return;const{openProduct}=await import('./feed.js');await openProduct(btn.dataset.openProduct)});
+  }catch(e){
+    console.error('Erro ao carregar o perfil:',e);
+    feedback.hidden=false;feedback.className='form-feedback error';feedback.textContent='Não foi possível carregar todos os dados do perfil. Atualize a página e tente novamente.';
+    ordersList.innerHTML='<p class="muted">Não foi possível carregar os pedidos.</p>';
+    wishlistList.innerHTML='<p class="muted">Não foi possível carregar a lista de desejos.</p>';
+  }
+  form.onsubmit=async e=>{
+    e.preventDefault();
+    const f=new FormData(form),fields={full_name:String(f.get('full_name')||'').trim(),cpf:String(f.get('cpf')||'').trim(),phone:String(f.get('phone')||'').trim(),instagram:String(f.get('instagram')||'').trim(),address_line:String(f.get('address_line')||'').trim(),address_number:String(f.get('address_number')||'').trim(),address_complement:String(f.get('address_complement')||'').trim(),neighborhood:String(f.get('neighborhood')||'').trim(),city:String(f.get('city')||'').trim(),state:String(f.get('state')||'').trim().toUpperCase(),postal_code:String(f.get('postal_code')||'').trim(),email:user.email||null};
+    if(!fields.full_name){feedback.hidden=false;feedback.className='form-feedback error';feedback.textContent='Informe seu nome completo.';return}
+    showLoader('Salvando seus dados…');feedback.hidden=true;
+    try{const{error}=await supabase.from('profiles').upsert({user_id:user.id,...fields},{onConflict:'user_id'});if(error)throw error;feedback.hidden=false;feedback.className='form-feedback success';feedback.textContent='Seus dados foram salvos.';toast('Perfil atualizado.')}
+    catch(e){feedback.hidden=false;feedback.className='form-feedback error';feedback.textContent='Não foi possível salvar os dados. Tente novamente.';console.error('Erro ao salvar perfil:',e)}
+    finally{hideLoader()}
+  };
+  el.querySelector('#show-new-password').onclick=()=>{passwordForm.hidden=!passwordForm.hidden;passwordError.hidden=true};
+  passwordForm.onsubmit=async e=>{
+    e.preventDefault();
+    const pass=passwordForm.elements.password.value,confirm=passwordForm.elements.confirm.value;
+    if(pass!==confirm){passwordError.hidden=false;passwordForm.elements.confirm.focus();return}
+    passwordError.hidden=true;showLoader('Atualizando senha…');
+    try{const{error}=await supabase.auth.updateUser({password:pass});if(error)throw error;passwordForm.reset();passwordForm.hidden=true;toast('Senha atualizada com sucesso.')}
+    catch(e){passwordError.hidden=false;passwordError.textContent=e?.message||'Não foi possível atualizar a senha. Entre novamente e tente de novo.';console.error('Erro ao atualizar senha:',e)}
+    finally{hideLoader()}
+  };
+  el.querySelector('#logout').onclick=async()=>{showLoader('Saindo da conta…');try{await signOut();await import('./home.js').then(m=>m.navigate('home'));showLogin('Você saiu da sua conta.')}catch(e){toast('Não foi possível sair da conta.')}finally{hideLoader()}};
 }
