@@ -65,7 +65,7 @@ export async function startCheckout(el){
     if(!address.street||!address.number||!address.neighborhood||!address.city||!address.state||!address.postal_code){result.textContent='Preencha rua, número, bairro, cidade, estado e CEP antes de calcular o frete.';return}
     quoteButton.disabled=true;submitButton.disabled=true;result.textContent='Calculando frete fixo…';showLoader('Calculando frete…');
     try{
-      const norm=value=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase().replace(/\\s+/g,' ');
+      const norm=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' ');
       const city=norm(address.city),state=norm(address.state),neighborhood=norm(address.neighborhood);
       const waText='Olá! Gostaria de consultar a entrega para meu pedido: '+summary+'. Endereço: '+Object.values(address).filter(Boolean).join(', ');
       const whatsapp='<a class="primary" target="_blank" rel="noopener" href="https://wa.me/5584920039738?text='+encodeURIComponent(waText)+'">Consultar pelo WhatsApp</a>';
