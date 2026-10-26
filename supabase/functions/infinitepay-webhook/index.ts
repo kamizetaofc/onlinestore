@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     const nsu = String(body.order_nsu || body.orderNsu || "").trim();
     if (!nsu) return out({ error: "missing_order_nsu" }, 400);
 
-    const db = createClient(url, serviceKey);
+    const db = createClient(url!, serviceKey!);
     const { data: order, error: orderLookupError } = await db
       .from("orders")
       .select("*")
@@ -111,11 +111,11 @@ Deno.serve(async (req) => {
         {
           method: "POST",
           headers: {
-            "X-Api-Key": apiKey,
+            "X-Api-Key": apiKey!,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            handle,
+            handle: handle!,
             order_nsu: nsu,
             transaction_nsu: transactionNsu,
             slug,
@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
         const url = Deno.env.get("SUPABASE_URL");
         const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
         if (url && serviceKey) {
-          const db = createClient(url, serviceKey);
+          const db = createClient(url!, serviceKey!);
           await db.from("payment_events")
             .update({ processing_error: "Falha interna ao processar o webhook." })
             .eq("id", eventRowId);
