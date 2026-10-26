@@ -63,18 +63,33 @@ export async function startCheckout(el){
     if(fulfillment.value!=='delivery'){result.textContent='Na retirada não há frete.';return}
     const f=new FormData(form),address={street:f.get('street'),number:f.get('number'),complement:f.get('complement'),neighborhood:f.get('neighborhood'),city:f.get('city'),state:f.get('state'),postal_code:f.get('postal_code')};
     if(!address.street||!address.number||!address.neighborhood||!address.city||!address.state||!address.postal_code){result.textContent='Preencha rua, número, bairro, cidade, estado e CEP antes de calcular o frete.';return}
-    quoteButton.disabled=true;submitButton.disabled=true;result.textContent='Consultando cotação real da Uber Direct…';showLoader('Consultando frete…');
+    quoteButton.disabled=true;submitButton.disabled=true;result.textContent='Calculando frete fixo…';showLoader('Calculando frete…');
     try{
-      const{data,error}=await supabase.functions.invoke('uber-estimate',{body:{address}});
-      if(error){const info=await getInvokeError(error);if(info.error==='outside_service_area'){const message='Olá! Meu endereço não possui previsão de entrega pelo site, podemos combinar meu pedido por aqui? Meu pedido é este: '+summary+'. Endereço: '+Object.values(address).filter(Boolean).join(', ');result.innerHTML='<p>Não há previsão do frete para este endereço no momento. Contate o vendedor para combinar a entrega.</p><a class="primary" target="_blank" rel="noopener" href="https://wa.me/5584920039738?text='+encodeURIComponent(message)+'">Combinar pelo WhatsApp</a>'}else result.textContent=info.message||info.error||'Não foi possível calcular o frete. Confira se as credenciais e a habilitação da Uber Direct estão ativas.';estimateId=null;return}
-      if(!data?.estimate_id||!Number.isFinite(Number(data.delivery_fee))){result.textContent='A Uber não retornou uma cotação válida. Tente novamente ou selecione retirada.';estimateId=null;return}
-      estimateId=data.estimate_id;result.textContent='Frete Uber Direct: '+money(data.delivery_fee)+' · cotação válida até '+(data.expires_at?new Date(data.expires_at).toLocaleString('pt-BR'):'horário informado pela Uber')+'.';
+      const norm=value=>String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim().toLowerCase().replace(/\\s+/g,' ');
+      const city=norm(address.city),state=norm(address.state),neighborhood=norm(address.neighborhood);
+      const waText='Olá! Gostaria de consultar a entrega para meu pedido: '+summary+'. Endereço: '+Object.values(address).filter(Boolean).join(', ');
+      const whatsapp='<a class="primary" target="_blank" rel="noopener" href="https://wa.me/5584920039738?text='+encodeURIComponent(waText)+'">Consultar pelo WhatsApp</a>';
+      let fee=null,reason='';
+      if(state!=='rn') reason='Por enquanto, entregas fora do Rio Grande do Norte precisam ser combinadas com o vendedor.';
+      else if(city==='ceara-mirim'){
+        const fixed={'barretao':800,'santa paula':800,'gravata':1000,'mangabeira':1000,'primavera':1000,'centro':600,'planalto':600,'nova descoberta':600,'nova conquista':600,'novo horizonte':600,'vale do amanhecer':600,'verde vale':600,'cohab':600,'sao geraldo':600,'santa agueda':600,'passifica':600};
+        if(Object.prototype.hasOwnProperty.call(fixed,neighborhood))fee=fixed[neighborhood];else reason='Esse bairro de Ceará-Mirim não está na lista de entrega automática.';
+      }else if(city==='joao camara')fee=600;
+      else if(city==='sao goncalo do amarante'){if(neighborhood==='jardim lola')fee=1600;else reason='Em São Gonçalo do Amarante, a entrega automática é somente no bairro Jardim Lola.';}
+      else if(city==='natal'){if(['nordeste','quintas','nazare','lagoa nova'].includes(neighborhood))fee=1600;else reason='Em Natal, a entrega automática está disponível somente nos bairros Nordeste, Quintas, Nazaré e Lagoa Nova.';}
+      else reason='Sua cidade precisa ser confirmada com o vendedor.';
+      estimateId=null;
+      if(fee===null){result.innerHTML='<p>'+escapeHTML(reason)+' Entre em contato para combinar a entrega.</p>'+whatsapp;return;}
+      result.textContent='Frete fixo: '+money(fee)+'. Total estimado: '+money(subtotal+fee)+'.';
+      estimateId='fixed:'+fee;
+    }catch(e){result.textContent='Não foi possível calcular o frete. Confira o endereço e tente novamente.';estimateId=null;console.error('Erro ao calcular frete fixo:',e)}
+    finally{hideLoader();quoteButton.disabled=false;submitButton.disabled=false}
     }catch(e){result.textContent='Não foi possível conectar à Uber Direct. Verifique a conexão e tente novamente.';estimateId=null;console.error('Erro de rede ao calcular frete:',e)}
     finally{hideLoader();quoteButton.disabled=false;submitButton.disabled=false}
   };
   form.onsubmit=async e=>{
     e.preventDefault();
-    if(fulfillment.value==='delivery'&&!estimateId){result.textContent='Calcule primeiro uma cotação válida de frete ou selecione retirada.';return}
+    if(fulfillment.value==='delivery'&&!estimateId){result.textContent='Calcule o frete primeiro. Se a região precisar de consulta, fale com o vendedor pelo WhatsApp.';return}
     const f=new FormData(form),method=f.get('fulfillment_method'),address={street:f.get('street'),number:f.get('number'),complement:f.get('complement'),neighborhood:f.get('neighborhood'),city:f.get('city'),state:String(f.get('state')||'').toUpperCase(),postal_code:f.get('postal_code')};
     submitButton.disabled=true;quoteButton.disabled=true;result.textContent='Criando pedido e checkout seguro…';showLoader('Preparando pagamento pela InfinitePay…');
     try{
