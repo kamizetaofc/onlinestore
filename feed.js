@@ -27,9 +27,10 @@ async function loadMore(){
 }
 async function readProduct(id){
   const controller=new AbortController();
-  const abortTimer=setTimeout(()=>controller.abort(),11500);
+  const abortTimer=setTimeout(()=>controller.abort(),9000);
   try{
-    return await withTimeout(supabase.from('products').select('id,name,price_cents,image_url,description,available_sizes,category,product_code,created_at').eq('id',id).abortSignal(controller.signal).maybeSingle(),10000,'Tempo esgotado ao carregar o produto.');
+    try{return await withTimeout(supabase.from('products').select('id,name,price_cents,image_url,description,available_sizes,category,product_code,created_at').eq('id',id).abortSignal(controller.signal).maybeSingle(),10000,'Tempo esgotado ao carregar o produto.')}
+    catch(e){if(e?.name==='AbortError')throw new Error('Tempo esgotado ao carregar o produto.');throw e}
   }finally{clearTimeout(abortTimer)}
 }
 export async function openProduct(id){
