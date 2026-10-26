@@ -14,7 +14,7 @@ export function showLogin(notice=''){
     finally{button.disabled=false}
   };
   el.querySelector('#signup').onclick=()=>signupForm(el,d);
-  d.showModal();
+  if(!d.open)d.showModal();
 }
 
 function signupForm(el,d){
@@ -40,7 +40,7 @@ function signupForm(el,d){
     }finally{hideLoader();submit.disabled=false}
   };
   el.querySelector('#back-login').onclick=()=>showLogin();
-  d.showModal();
+  if(!d.open)d.showModal();
 }
 
 const profileInput=(name,label,value,type='text',extra='')=>'<label class="field">'+label+'<input name="'+name+'" type="'+type+'" value="'+escapeHTML(value||'')+'" '+extra+'></label>';
