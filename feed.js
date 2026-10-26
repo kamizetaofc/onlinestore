@@ -45,7 +45,8 @@ export async function openProduct(id){
       result=await readProduct(id);
     }
     if(result.error&&/jwt|token expired|invalid claim/i.test(String(result.error.message||''))){
-      await withTimeout(supabase.auth.refreshSession(),5000,'Não foi possível renovar sua sessão.');
+      const refreshed=await withTimeout(supabase.auth.refreshSession(),5000,'Não foi possível renovar sua sessão.');
+      if(refreshed.error)throw refreshed.error;
       result=await readProduct(id);
     }
     if(result.error)throw result.error;
