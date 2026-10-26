@@ -50,7 +50,7 @@ export async function startCheckout(el){
 
   const subtotal=cart.reduce((sum,item)=>sum+(item.products?.price_cents||0)*item.quantity,0);
   const summary=cart.map(item=>item.quantity+'x '+item.products?.name+' ('+item.size+')').join(', ');
-  const stateOptions=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RS','RO','RR','SC','SP','SE','TO'];
+  const stateOptions=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
   const cityOptions=['Ceará-Mirim','João Câmara','São Gonçalo do Amarante','Natal'];
   const neighborhoodOptions={
     'ceara mirim':['Barretão','Santa Paula','Gravatá','Mangabeira','Primavera','Centro','Planalto','Nova Descoberta','Nova Conquista','Novo Horizonte','Vale do Amanhecer','Verde Vale','Cohab','São Geraldo','Santa Águeda','Passifica'],
