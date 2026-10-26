@@ -9,7 +9,7 @@ export function showLogin(notice=''){
     const f=new FormData(e.currentTarget),feedback=el.querySelector('#auth-feedback'),button=e.currentTarget.querySelector('button[type="submit"]');
     feedback.hidden=false;feedback.className='form-feedback';feedback.textContent='';
     button.disabled=true;
-    try{await signIn(f.get('email'),f.get('password'));d.close();toast('Login realizado com sucesso.');}
+    try{await signIn(f.get('email'),f.get('password'));d.close();toast('Login realizado com sucesso.');const route=document.querySelector('#page-view')?.dataset.view;if(route==='profile'||route==='cart'){const app=await import('./home.js');await app.navigate(route)}}
     catch(x){feedback.textContent=x?.message||'Não foi possível entrar. Confira seu e-mail e senha.';feedback.classList.add('error');}
     finally{button.disabled=false}
   };
