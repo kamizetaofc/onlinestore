@@ -33,7 +33,7 @@ function signupForm(el,d){
     try{
       const result=await signUp({full_name:f.get('full_name'),cpf:f.get('cpf'),phone:f.get('phone'),email:f.get('email'),password:f.get('password')});
       d.close();
-      const message=result?.data?.user&&!result?.data?.session?'Conta criada. Confira seu e-mail para confirmar o cadastro e depois entre.':'Conta criada com sucesso. Entre com seu e-mail e senha.';
+      const message=result?.user&&!result?.session?'Conta criada. Confira seu e-mail para confirmar o cadastro e depois entre.':'Conta criada com sucesso. Entre com seu e-mail e senha.';
       showLogin(message);
     }catch(x){
       feedback.hidden=false;feedback.className='form-feedback error';feedback.textContent=x?.message||'Não foi possível criar a conta. Tente novamente.';
