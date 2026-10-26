@@ -242,7 +242,7 @@ button:disabled{opacity:.6;cursor:wait}
 .reel-player-column{
   position:relative;
   flex:0 1 auto;
-  width:min(52.875dvh,calc(100vw - 180px));
+  width:min(calc(94dvh * 9 / 16),506.25px,calc(100vw - 240px));
   height:min(94dvh,900px);
   aspect-ratio:9/16;
   overflow:hidden;
