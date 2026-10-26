@@ -524,7 +524,7 @@ body.payment-result-page{
     #080808;
 }
 .payment-page{
-  width:min(100% - 32px,660px);
+  width:min(660px,calc(100% - 32px));
   min-height:100vh;
   margin:0 auto;
   padding:36px 0 24px;
@@ -666,7 +666,7 @@ body.payment-result-page{
 }
 .payment-refresh:disabled{opacity:.6;cursor:wait}
 @media(max-width:520px){
-  .payment-page{width:min(100% - 20px,660px);padding:18px 0}
+  .payment-page{width:min(660px,calc(100% - 20px));padding:18px 0}
   .payment-card{padding:22px 18px;border-radius:18px}
   .payment-brand{padding-bottom:19px}
   .payment-status-panel{gap:13px;padding:16px;margin:22px 0 18px}
