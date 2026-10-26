@@ -44,6 +44,24 @@ function signupForm(el,d){
 }
 
 const profileInput=(name,label,value,type='text',extra='')=>'<label class="field">'+label+'<input name="'+name+'" type="'+type+'" value="'+escapeHTML(value||'')+'" '+extra+'></label>';
+const brazilStates=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+const freightCities=['Ceará-Mirim','João Câmara','São Gonçalo do Amarante','Natal'];
+const profileStateSelect=()=>'<label class="field">Estado (UF)<select name="state" autocomplete="address-level1" required><option value="">Selecione a UF</option>'+brazilStates.map(state=>'<option value="'+state+'">'+state+'</option>').join('')+'</select></label>';
+const profileCityCombobox=()=>'<label class="field">Cidade<input id="profile-city" name="city" type="text" list="profile-city-options" autocomplete="address-level2" required><datalist id="profile-city-options"></datalist></label>';
+function renderProfileSummary(profile,user){
+  const p=profile||{};
+  const address=[p.address_line,p.address_number,p.address_complement,p.neighborhood,p.city,p.state,p.postal_code].filter(Boolean).join(', ');
+  const rows=[
+    ['Nome',p.full_name||user.user_metadata?.full_name||'Não informado'],
+    ['CPF',p.cpf||'Não informado'],
+    ['Telefone',p.phone||'Não informado'],
+    ['Instagram',p.instagram||'Não informado'],
+    ['E-mail',p.email||user.email||'Não informado'],
+    ['Endereço',address||'Endereço não informado']
+  ];
+  const root=document.querySelector('#profile-summary-details');
+  if(root)root.innerHTML=rows.map(([label,value])=>'<p class="profile-summary-row"><span>'+escapeHTML(label)+'</span><b>'+escapeHTML(value)+'</b></p>').join('');
+}
 const terminalOrderStatuses=new Set(['cancelled','canceled','completed','delivered','refunded','failed','closed']);
 function orderCard(o){
   const items=(o.order_items||[]).map(i=>'<p class="muted">'+escapeHTML(i.product_name)+' · '+i.quantity+'x · '+escapeHTML(i.size)+' · '+money(i.unit_price_cents*i.quantity)+'</p>').join('');
@@ -54,8 +72,12 @@ function orderCard(o){
 export async function renderProfile(el){
   const{data:{user},error:authError}=await withTimeout(supabase.auth.getUser(),10000,'Não foi possível confirmar sua sessão. Tente entrar novamente.');
   if(authError||!user){showLogin('Entre na sua conta para visualizar seu perfil.');return}
-  el.innerHTML='<section class="private-profile"><header class="private-profile-heading"><img src="./kamizeta.png" alt="Kamizeta" onerror="this.hidden=true"><div><h2>Meu perfil</h2><p>'+escapeHTML(user.email||'')+'</p></div></header><p id="profile-feedback" class="form-feedback" role="status" hidden></p><form id="profile-form" class="profile-data-form"><h3>Dados pessoais</h3>'+profileInput('full_name','Nome completo',user.user_metadata?.full_name||'','text','autocomplete="name" required')+profileInput('cpf','CPF','','text','inputmode="numeric"')+profileInput('phone','Telefone / WhatsApp','','tel','autocomplete="tel"')+profileInput('instagram','Instagram','','text','')+'<p class="profile-readonly-email">E-mail: <b>'+escapeHTML(user.email||'')+'</b></p><h3>Endereço</h3>'+profileInput('address_line','Rua', '', 'text','autocomplete="street-address"')+profileInput('address_number','Número','','text','')+profileInput('address_complement','Complemento','','text','')+profileInput('neighborhood','Bairro','','text','')+profileInput('city','Cidade','','text','autocomplete="address-level2"')+profileInput('state','Estado (UF)','','text','maxlength="2" autocomplete="address-level1"')+profileInput('postal_code','CEP','','text','autocomplete="postal-code"')+'<button type="submit" class="primary">Salvar meus dados</button></form><section class="profile-password"><h3>Senha</h3><p>Por segurança, sua senha nunca é exibida.</p><button type="button" id="show-new-password" class="secondary">Definir nova senha</button><form id="new-password-form" class="profile-data-form" hidden><label class="field">Senha atual (se solicitada)<input name="current_password" type="password" autocomplete="current-password"></label><label class="field">Nova senha<input name="password" type="password" minlength="8" autocomplete="new-password" required></label><label class="field">Confirmar nova senha<input name="confirm" type="password" minlength="8" autocomplete="new-password" required></label><p id="new-password-error" class="form-feedback error" role="alert" hidden>As senhas não coincidem.</p><button class="primary" type="submit">Atualizar senha</button></form></section><section class="profile-orders"><h3>Meus pedidos</h3><div class="profile-order-tabs"><button type="button" class="active" data-orders-view="current">Pedidos atuais</button><button type="button" data-orders-view="history">Histórico</button></div><div id="profile-orders-list"><p class="muted">Carregando pedidos…</p></div></section><section class="profile-wishlist"><h3>Lista de desejos</h3><div id="profile-wishlist-list"><p class="muted">Carregando lista…</p></div></section><button type="button" id="logout" class="secondary profile-logout"><i class="fa-solid fa-right-from-bracket"></i> Sair da conta</button></section>';
-  const form=el.querySelector('#profile-form'),feedback=el.querySelector('#profile-feedback'),passwordForm=el.querySelector('#new-password-form'),passwordError=el.querySelector('#new-password-error'),ordersList=el.querySelector('#profile-orders-list'),wishlistList=el.querySelector('#profile-wishlist-list');
+  el.innerHTML='<section class="private-profile"><header class="private-profile-heading"><img src="./kamizeta.png" alt="Kamizeta" onerror="this.hidden=true"><div><h2>Meu perfil</h2><p>'+escapeHTML(user.email||'')+'</p></div></header><p id="profile-feedback" class="form-feedback" role="status" hidden></p><section class="profile-data-summary"><div class="profile-summary-heading"><h3>Dados pessoais</h3><button type="button" id="edit-profile" class="profile-edit-icon" aria-label="Editar dados pessoais" title="Editar dados pessoais"><i class="fa-solid fa-pen"></i></button></div><div id="profile-summary-details"><p class="muted">Carregando seus dados…</p></div></section><dialog id="profile-edit-dialog" class="modal profile-edit-dialog"><button type="button" id="close-profile-edit" class="modal-close" aria-label="Fechar">×</button><article><h2>Editar dados pessoais</h2><p id="profile-edit-feedback" class="form-feedback" role="status" hidden></p><form id="profile-form" class="profile-data-form"><h3>Dados pessoais</h3>'+profileInput('full_name','Nome completo',user.user_metadata?.full_name||'','text','autocomplete="name" required')+profileInput('cpf','CPF','','text','inputmode="numeric"')+profileInput('phone','Telefone / WhatsApp','','tel','autocomplete="tel"')+profileInput('instagram','Instagram','','text','')+'<p class="profile-readonly-email">E-mail: <b>'+escapeHTML(user.email||'')+'</b></p><h3>Endereço</h3>'+profileInput('address_line','Rua', '', 'text','autocomplete="street-address"')+profileInput('address_number','Número','','text','')+profileInput('address_complement','Complemento','','text','')+profileInput('neighborhood','Bairro','','text','')+profileCityCombobox()+profileStateSelect()+profileInput('postal_code','CEP','','text','autocomplete="postal-code"')+'<button type="submit" class="primary">Salvar meus dados</button></form></article></dialog><section class="profile-password"><h3>Senha</h3><p>Por segurança, sua senha nunca é exibida.</p><button type="button" id="show-new-password" class="secondary">Definir nova senha</button><form id="new-password-form" class="profile-data-form" hidden><label class="field">Senha atual (se solicitada)<input name="current_password" type="password" autocomplete="current-password"></label><label class="field">Nova senha<input name="password" type="password" minlength="8" autocomplete="new-password" required></label><label class="field">Confirmar nova senha<input name="confirm" type="password" minlength="8" autocomplete="new-password" required></label><p id="new-password-error" class="form-feedback error" role="alert" hidden>As senhas não coincidem.</p><button class="primary" type="submit">Atualizar senha</button></form></section><section class="profile-orders"><h3>Meus pedidos</h3><div class="profile-order-tabs"><button type="button" class="active" data-orders-view="current">Pedidos atuais</button><button type="button" data-orders-view="history">Histórico</button></div><div id="profile-orders-list"><p class="muted">Carregando pedidos…</p></div></section><section class="profile-wishlist"><h3>Lista de desejos</h3><div id="profile-wishlist-list"><p class="muted">Carregando lista…</p></div></section><button type="button" id="logout" class="secondary profile-logout"><i class="fa-solid fa-right-from-bracket"></i> Sair da conta</button></section>';
+  const form=el.querySelector('#profile-form'),feedback=el.querySelector('#profile-feedback'),editFeedback=el.querySelector('#profile-edit-feedback'),editDialog=el.querySelector('#profile-edit-dialog'),passwordForm=el.querySelector('#new-password-form'),passwordError=el.querySelector('#new-password-error'),ordersList=el.querySelector('#profile-orders-list'),wishlistList=el.querySelector('#profile-wishlist-list');
+  el.querySelector('#edit-profile').onclick=()=>editDialog.showModal();
+  el.querySelector('#close-profile-edit').onclick=()=>editDialog.close();
+  const updateProfileCityOptions=()=>{const list=form.querySelector('#profile-city-options');list.innerHTML=form.elements.state.value==='RN'?freightCities.map(city=>'<option value="'+escapeHTML(city)+'">').join(''):''};
+  form.elements.state.addEventListener('change',updateProfileCityOptions);
   try{
     const [profileResult,ordersResult,wishesResult]=await Promise.all([
       withTimeout(supabase.from('profiles').select('full_name,cpf,phone,instagram,email,address_line,address_number,address_complement,neighborhood,city,state,postal_code').eq('user_id',user.id).maybeSingle(),10000,'Tempo esgotado ao carregar seu perfil.'),
@@ -64,7 +86,7 @@ export async function renderProfile(el){
     ]);
     if(profileResult.error)throw profileResult.error;
     const p=profileResult.data||{};
-    for(const [name,value] of Object.entries({full_name:p.full_name||user.user_metadata?.full_name||'',cpf:p.cpf||'',phone:p.phone||'',instagram:p.instagram||'',address_line:p.address_line||'',address_number:p.address_number||'',address_complement:p.address_complement||'',neighborhood:p.neighborhood||'',city:p.city||'',state:p.state||'',postal_code:p.postal_code||''})){if(form.elements[name])form.elements[name].value=value}
+    for(const [name,value] of Object.entries({full_name:p.full_name||user.user_metadata?.full_name||'',cpf:p.cpf||'',phone:p.phone||'',instagram:p.instagram||'',address_line:p.address_line||'',address_number:p.address_number||'',address_complement:p.address_complement||'',neighborhood:p.neighborhood||'',city:p.city||'',state:p.state||'',postal_code:p.postal_code||''})){if(form.elements[name])form.elements[name].value=value};updateProfileCityOptions();renderProfileSummary(p,user)
     if(ordersResult.error)throw ordersResult.error;
     const orders=ordersResult.data||[];
     const currentOrders=orders.filter(o=>!terminalOrderStatuses.has(String(o.order_status||'').toLowerCase())&&!terminalOrderStatuses.has(String(o.payment_status||'').toLowerCase()));
@@ -86,11 +108,17 @@ export async function renderProfile(el){
   form.onsubmit=async e=>{
     e.preventDefault();
     const f=new FormData(form),fields={full_name:String(f.get('full_name')||'').trim(),cpf:String(f.get('cpf')||'').trim(),phone:String(f.get('phone')||'').trim(),instagram:String(f.get('instagram')||'').trim(),address_line:String(f.get('address_line')||'').trim(),address_number:String(f.get('address_number')||'').trim(),address_complement:String(f.get('address_complement')||'').trim(),neighborhood:String(f.get('neighborhood')||'').trim(),city:String(f.get('city')||'').trim(),state:String(f.get('state')||'').trim().toUpperCase(),postal_code:String(f.get('postal_code')||'').trim(),email:user.email||null};
-    if(!fields.full_name){feedback.hidden=false;feedback.className='form-feedback error';feedback.textContent='Informe seu nome completo.';return}
-    showLoader('Salvando seus dados…');feedback.hidden=true;
-    try{const{error}=await supabase.from('profiles').upsert({user_id:user.id,...fields},{onConflict:'user_id'});if(error)throw error;feedback.hidden=false;feedback.className='form-feedback success';feedback.textContent='Seus dados foram salvos.';toast('Perfil atualizado.')}
-    catch(e){feedback.hidden=false;feedback.className='form-feedback error';feedback.textContent='Não foi possível salvar os dados. Tente novamente.';console.error('Erro ao salvar perfil:',e)}
-    finally{hideLoader()}
+    if(!fields.full_name){editFeedback.hidden=false;editFeedback.className='form-feedback error';editFeedback.textContent='Informe seu nome completo.';return}
+    showLoader('Salvando seus dados…');editFeedback.hidden=true;
+    try{
+      const{error}=await supabase.from('profiles').upsert({user_id:user.id,...fields},{onConflict:'user_id'});
+      if(error)throw error;
+      renderProfileSummary(fields,user);
+      toast('Perfil atualizado.');
+      editDialog.close();
+    }catch(e){
+      editFeedback.hidden=false;editFeedback.className='form-feedback error';editFeedback.textContent='Não foi possível salvar os dados. Tente novamente.';console.error('Erro ao salvar perfil:',e);
+    }finally{hideLoader()}
   };
   el.querySelector('#show-new-password').onclick=()=>{passwordForm.hidden=!passwordForm.hidden;passwordError.hidden=true};
   passwordForm.onsubmit=async e=>{
