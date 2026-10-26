@@ -1,15 +1,10 @@
 # Kamizeta
 
-Loja estática em HTML, CSS e JavaScript integrada ao Supabase. O site público é hospedado no GitHub Pages; autenticação, banco e Edge Functions continuam no Supabase.
+Loja estática em HTML, CSS e JavaScript integrada ao Supabase. O site público está hospedado no Vercel em https://kamizeta.vercel.app; autenticação, banco e Edge Functions continuam no Supabase.
 
-## Publicação no GitHub Pages
+## Publicação no Vercel
 
-1. No GitHub, abra **Settings → Pages** deste repositório.
-2. Em **Build and deployment**, selecione **GitHub Actions** como fonte.
-3. O workflow `.github/workflows/deploy-pages.yml` publica automaticamente a branch `main`.
-4. Endereço esperado: https://kamizetaofc.github.io/onlinestore/
-
-O workflow monta somente os arquivos necessários para o site; ele não publica as migrações SQL nem o código das Edge Functions.
+O projeto `kamizetaofc/onlinestore` está conectado ao Vercel. A branch `main` é publicada automaticamente no domínio https://kamizeta.vercel.app.
 
 ## Logomarca e favicon
 
@@ -20,8 +15,8 @@ O workflow monta somente os arquivos necessários para o site; ele não publica 
 ## Supabase
 
 - A URL do projeto e a chave publishable ficam em `supabaseClient.js`. A chave publishable pode ser pública; nunca coloque chaves secretas ou `service_role` no frontend.
-- Em **Authentication → URL Configuration**, configure o **Site URL** para `https://kamizetaofc.github.io/onlinestore/` e inclua também essa URL nas **Redirect URLs** permitidas. Esse ajuste ainda precisa ser salvo no painel do Supabase.
-- A Edge Function `create-checkout` já usa como destino de pagamento `https://kamizetaofc.github.io/onlinestore/pagamento-concluido.html?order_nsu=...`.
+- Em **Authentication → URL Configuration**, configure o **Site URL** para `https://kamizeta.vercel.app` e inclua `https://kamizeta.vercel.app/**` nas **Redirect URLs** permitidas. Esse ajuste ainda precisa ser salvo no painel do Supabase.
+- A Edge Function `create-checkout` já usa como destino de pagamento `https://kamizeta.vercel.app/pagamento-concluido.html?order_nsu=...`.
 - Configure os secrets `INFINITEPAY_API_KEY`, `INFINITEPAY_WEBHOOK_TOKEN` e `GOOGLE_SERVICE_ACCOUNT_JSON` no Supabase; não os publique no GitHub.
 - A galeria de imagens já aponta para a pasta do Drive com ID `1BsaXcKyWzaUHVB5l44qNRIDNs6b4VWCq`. A Edge Function ainda precisa do secret `GOOGLE_SERVICE_ACCOUNT_JSON` com uma conta de serviço autorizada a acessar a pasta.
 - **Segurança do Drive:** não deixe “qualquer pessoa com o link” como **Editor**. Use **Leitor** para o acesso público às imagens e compartilhe a pasta separadamente com o e-mail da conta de serviço, concedendo a ela apenas a permissão necessária.
@@ -30,7 +25,7 @@ O workflow monta somente os arquivos necessários para o site; ele não publica 
 ## Antes de considerar a loja pronta para produção
 
 - Adicione `kamizeta.png` à raiz do repositório.
-- Confirme as URLs de autenticação no painel do Supabase e publique o site via GitHub Pages.
+- Confirme as URLs de autenticação no painel do Supabase e confirme a publicação no Vercel.
 - Teste a galeria do Drive, frete fixo, checkout InfinitePay e webhook com credenciais reais.
 - Verifique no Supabase as políticas RLS e os URLs de autenticação após a publicação.
 
