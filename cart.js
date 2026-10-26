@@ -63,12 +63,12 @@ export async function startCheckout(el){
     if(fulfillment.value!=='delivery'){result.textContent='Na retirada não há frete.';return}
     const f=new FormData(form),address={street:f.get('street'),number:f.get('number'),complement:f.get('complement'),neighborhood:f.get('neighborhood'),city:f.get('city'),state:f.get('state'),postal_code:f.get('postal_code')};
     if(!address.street||!address.number||!address.neighborhood||!address.city||!address.state||!address.postal_code){result.textContent='Preencha rua, número, bairro, cidade, estado e CEP antes de calcular o frete.';return}
-    quoteButton.disabled=true;submitButton.disabled=true;result.textContent='Calculando frete fixo…';showLoader('Calculando frete…');
+    quoteButton.disabled=true;submitButton.disabled=true;result.textContent='Calculando frete fixo…';
     try{
       const norm=value=>String(value||'').normalize('NFD').replace(/[̀-ͯ]/g,'').trim().toLowerCase().replace(/\s+/g,' ');
       const city=norm(address.city),state=norm(address.state),neighborhood=norm(address.neighborhood);
       const waText='Olá! Gostaria de consultar a entrega para meu pedido: '+summary+'. Endereço: '+Object.values(address).filter(Boolean).join(', ');
-      const whatsapp='<a class="primary" target="_blank" rel="noopener" href="https://wa.me/5584920039738?text='+encodeURIComponent(waText)+'">Consultar pelo WhatsApp</a>';
+      const whatsapp='<a class="primary" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(waText)+'">Consultar pelo WhatsApp</a>';
       let fee=null,reason='';
       if(state!=='rn') reason='Por enquanto, entregas fora do Rio Grande do Norte precisam ser combinadas com o vendedor.';
       else if(city==='ceara-mirim'){
@@ -83,9 +83,7 @@ export async function startCheckout(el){
       result.textContent='Frete fixo: '+money(fee)+'. Total estimado: '+money(subtotal+fee)+'.';
       estimateId='fixed:'+fee;
     }catch(e){result.textContent='Não foi possível calcular o frete. Confira o endereço e tente novamente.';estimateId=null;console.error('Erro ao calcular frete fixo:',e)}
-    finally{hideLoader();quoteButton.disabled=false;submitButton.disabled=false}
-    }catch(e){result.textContent='Não foi possível conectar à Uber Direct. Verifique a conexão e tente novamente.';estimateId=null;console.error('Erro de rede ao calcular frete:',e)}
-    finally{hideLoader();quoteButton.disabled=false;submitButton.disabled=false}
+    finally{quoteButton.disabled=false;submitButton.disabled=false}
   };
   form.onsubmit=async e=>{
     e.preventDefault();
