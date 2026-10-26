@@ -31,7 +31,7 @@ O workflow monta somente os arquivos necessários para o site; ele não publica 
 
 - Adicione `kamizeta.png` à raiz do repositório.
 - Confirme as URLs de autenticação no painel do Supabase e publique o site via GitHub Pages.
-- Teste a galeria do Drive, cotação Uber, checkout InfinitePay e webhook com credenciais reais.
+- Teste a galeria do Drive, frete fixo, checkout InfinitePay e webhook com credenciais reais.
 - Verifique no Supabase as políticas RLS e os URLs de autenticação após a publicação.
 
 Checkout, entrega e pagamentos externos não devem ser considerados validados até a execução dos testes reais.
