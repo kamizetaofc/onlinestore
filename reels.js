@@ -204,9 +204,9 @@ function openReel(index) {
   if (!reels.length) return;
   ensureViewer();
   reelIndex = -1;
-  showReel(index);
   if (!viewer.open) viewer.showModal();
   document.body.classList.add('reel-viewer-open');
+  showReel(index);
 }
 
 export async function loadReels() {
