@@ -25,13 +25,47 @@ async function loadMore(){
   }catch(e){console.error('Erro inesperado no feed:',e);if(start===0)target.innerHTML='<div class="feed-state"><p class="muted">Ocorreu um erro ao carregar os produtos.</p><button id="retry-feed" class="secondary">Tentar novamente</button></div>';target.querySelector('#retry-feed')?.addEventListener('click',()=>{offset=0;finished=false;target.innerHTML='';loadMore()})}
   finally{loading=false}
 }
+async function readProduct(id){
+  const controller=new AbortController();
+  const abortTimer=setTimeout(()=>controller.abort(),9000);
+  try{
+    try{return await withTimeout(supabase.from('products').select('id,name,price_cents,image_url,description,available_sizes,category,product_code,created_at').eq('id',id).abortSignal(controller.signal).maybeSingle(),10000,'Tempo esgotado ao carregar o produto.')}
+    catch(e){if(e?.name==='AbortError')throw new Error('Tempo esgotado ao carregar o produto.');throw e}
+  }finally{clearTimeout(abortTimer)}
+}
 export async function openProduct(id){
+  if(!id)return false;
   showLoader('Carregando produto…');
   try{
-    const{data:p,error}=await withTimeout(supabase.from('products').select('*').eq('id',id).maybeSingle(),12000,'Tempo esgotado ao carregar o produto.');
-    if(error||!p){toast('Produto indisponível');return}
-    const{data:images}=await withTimeout(supabase.from('product_images').select('image_url,position').eq('product_id',id).order('position',{ascending:true}),12000,'Tempo esgotado ao carregar as imagens do produto.');
-    p.product_images=images||[];
-    const{showProduct}=await import('./comments.js');await showProduct(p);
+    let result;
+    try{result=await readProduct(id)}
+    catch(firstError){
+      if(!String(firstError?.message||'').toLowerCase().includes('tempo esgotado'))throw firstError;
+      await new Promise(resolve=>setTimeout(resolve,300));
+      result=await readProduct(id);
+    }
+    if(result.error&&/jwt|token expired|invalid claim/i.test(String(result.error.message||''))){
+      const refreshed=await withTimeout(supabase.auth.refreshSession(),5000,'Não foi possível renovar sua sessão.');
+      if(refreshed.error)throw refreshed.error;
+      result=await readProduct(id);
+    }
+    if(result.error)throw result.error;
+    const p=result.data;
+    if(!p){toast('Produto indisponível.');return false}
+    let images=[];
+    try{
+      const{data,error}=await withTimeout(supabase.from('product_images').select('image_url,position').eq('product_id',id).order('position',{ascending:true}),8000,'Tempo esgotado ao carregar as imagens.');
+      if(error)throw error;
+      images=data||[];
+    }catch(e){console.warn('Imagens adicionais indisponíveis; exibindo a imagem principal.',e)}
+    p.product_images=images;
+    const{showProduct}=await import('./comments.js');
+    await showProduct(p);
+    return true;
+  }catch(e){
+    console.error('Não foi possível abrir o produto:',e);
+    const message=String(e?.message||'').toLowerCase().includes('tempo esgotado')?'O servidor demorou para responder. Tente novamente.':'Não foi possível abrir este produto. Verifique sua conexão e tente novamente.';
+    toast(message);
+    return false;
   }finally{hideLoader()}
 }
