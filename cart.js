@@ -49,9 +49,9 @@ export async function startCheckout(el){
   if(!cart?.length){toast('O carrinho está vazio.');await renderCart(el);return}
   const subtotal=cart.reduce((s,x)=>s+(x.products?.price_cents||0)*x.quantity,0),summary=cart.map(x=>x.quantity+'x '+x.products?.name+' ('+x.size+')').join(', ');
   el.innerHTML='<h2>Finalizar pedido</h2><p>'+escapeHTML(summary)+'</p><p>Subtotal dos produtos: <b>'+money(subtotal)+'</b></p><form id="checkout-form"><label class="field">Como deseja receber?<select id="fulfillment" name="fulfillment_method"><option value="delivery">Entrega</option><option value="pickup">Retirada</option></select></label><div id="address-fields">'+[['street','Rua',profile?.address_line||'','text'],['number','Número',profile?.address_number||'','text'],['complement','Complemento',profile?.address_complement||'','text'],['neighborhood','Bairro',profile?.neighborhood||'','text'],['city','Cidade',profile?.city||'','text'],['state','Estado (UF)',profile?.state||'RN','text'],['postal_code','CEP',profile?.postal_code||'','text']].map(([n,l,v,t])=>'<div class="field"><label for="checkout-'+n+'">'+l+'</label><input id="checkout-'+n+'" name="'+n+'" type="'+t+'" '+(n==='state'?'maxlength="2"':'')+' '+(n==='complement'?'':'required')+' value="'+escapeHTML(v)+'"></div>').join('')+'</div><div class="field"><label for="customer-notes">Observações do pedido</label><textarea id="customer-notes" name="customer_notes" rows="3"></textarea></div><div id="shipping-result" class="muted" role="status">Informe o endereço e calcule o frete.</div><div class="checkout-buttons"><button id="quote" type="button" class="secondary">Calcular frete</button><button type="submit" class="primary">Ir para pagamento</button><button id="back-cart" type="button" class="secondary">Voltar ao carrinho</button></div></form>';
-  let estimateId=null;
+  let shippingCalculated=false;
   const form=el.querySelector('#checkout-form'),addressFields=el.querySelector('#address-fields'),result=el.querySelector('#shipping-result'),fulfillment=el.querySelector('#fulfillment'),quoteButton=el.querySelector('#quote'),submitButton=form.querySelector('button[type="submit"]');
-  function setMethod(){const delivery=fulfillment.value==='delivery';addressFields.hidden=!delivery;addressFields.querySelectorAll('input').forEach(i=>i.required=delivery&&i.name!=='complement');result.textContent=delivery?'Informe o endereço e calcule o frete.':'Retirada selecionada: não será cobrado frete.';estimateId=null;quoteButton.hidden=!delivery}
+  function setMethod(){const delivery=fulfillment.value==='delivery';addressFields.hidden=!delivery;addressFields.querySelectorAll('input').forEach(i=>i.required=delivery&&i.name!=='complement');result.textContent=delivery?'Informe o endereço e calcule o frete.':'Retirada selecionada: não será cobrado frete.';shippingCalculated=false;quoteButton.hidden=!delivery}
   fulfillment.onchange=setMethod;setMethod();
   el.querySelector('#back-cart').onclick=()=>renderCart(el);
   async function getInvokeError(error){
@@ -78,20 +78,20 @@ export async function startCheckout(el){
       else if(city==='sao goncalo do amarante'){if(neighborhood==='jardim lola')fee=1600;else reason='Em São Gonçalo do Amarante, a entrega automática é somente no bairro Jardim Lola.';}
       else if(city==='natal'){if(['nordeste','quintas','nazare','lagoa nova'].includes(neighborhood))fee=1600;else reason='Em Natal, a entrega automática está disponível somente nos bairros Nordeste, Quintas, Nazaré e Lagoa Nova.';}
       else reason='Sua cidade precisa ser confirmada com o vendedor.';
-      estimateId=null;
+      shippingCalculated=false;
       if(fee===null){result.innerHTML='<p>'+escapeHTML(reason)+' Entre em contato para combinar a entrega.</p>'+whatsapp;return;}
       result.textContent='Frete fixo: '+money(fee)+'. Total estimado: '+money(subtotal+fee)+'.';
-      estimateId='fixed:'+fee;
-    }catch(e){result.textContent='Não foi possível calcular o frete. Confira o endereço e tente novamente.';estimateId=null;console.error('Erro ao calcular frete fixo:',e)}
+      shippingCalculated=true;
+    }catch(e){result.textContent='Não foi possível calcular o frete. Confira o endereço e tente novamente.';shippingCalculated=false;console.error('Erro ao calcular frete fixo:',e)}
     finally{quoteButton.disabled=false;submitButton.disabled=false}
   };
   form.onsubmit=async e=>{
     e.preventDefault();
-    if(fulfillment.value==='delivery'&&!estimateId){result.textContent='Calcule o frete primeiro. Se a região precisar de consulta, fale com o vendedor pelo WhatsApp.';return}
+    if(fulfillment.value==='delivery'&&!shippingCalculated){result.textContent='Calcule o frete primeiro. Se a região precisar de consulta, fale com o vendedor pelo WhatsApp.';return}
     const f=new FormData(form),method=f.get('fulfillment_method'),address={street:f.get('street'),number:f.get('number'),complement:f.get('complement'),neighborhood:f.get('neighborhood'),city:f.get('city'),state:String(f.get('state')||'').toUpperCase(),postal_code:f.get('postal_code')};
     submitButton.disabled=true;quoteButton.disabled=true;result.textContent='Criando pedido e checkout seguro…';showLoader('Preparando pagamento pela InfinitePay…');
     try{
-      const{data,error}=await supabase.functions.invoke('create-checkout',{body:{fulfillment_method:method,address,estimate_id:estimateId,customer_notes:f.get('customer_notes')}});
+      const{data,error}=await supabase.functions.invoke('create-checkout',{body:{fulfillment_method:method,address,customer_notes:f.get('customer_notes')}});
       if(error){const info=await getInvokeError(error);result.textContent=info.message||info.error||'A InfinitePay não conseguiu criar o link de pagamento. Confira a configuração das credenciais e tente novamente.';return}
       if(!data?.checkout_url){result.textContent='A resposta do checkout não contém um link válido. Nenhum redirecionamento foi realizado.';return}
       result.textContent='Pedido criado. Abrindo o pagamento seguro…';toast('Redirecionando para o pagamento seguro…');location.href=data.checkout_url;
