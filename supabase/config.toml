@@ -3,9 +3,6 @@ project_id = "wenddiwiqissmponbtby"
 [functions.google-drive-gallery]
 verify_jwt = true
 
-[functions.uber-estimate]
-verify_jwt = true
-
 [functions.create-checkout]
 verify_jwt = true
 
