@@ -10,7 +10,7 @@ O projeto `kamizetaofc/onlinestore` está conectado ao Vercel. A branch `main` �
 
 - Faça upload do arquivo da logomarca na **raiz do repositório** (mesmo nível de `index.html`), com o nome exato **`kamizeta.png`**.
 - O arquivo será usado automaticamente como logo da loja e favicon do site e do painel administrativo.
-- O workflow copia a imagem quando ela existir; depois do upload, um novo deploy do GitHub Pages será iniciado.
+- Ao adicionar ou atualizar a imagem na raiz do repositório, o Vercel publica a nova versão automaticamente.
 
 ## Supabase
 
