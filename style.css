@@ -754,3 +754,56 @@ body.payment-result-page{
   .product-icon-actions button{font-size:22px}
   #info-dialog:has(.product-description-modal){height:52dvh;max-height:60dvh}
 }
+
+
+/* Refinos de alinhamento da página principal e ações do produto */
+.product-icon-actions{
+  justify-content:flex-start;
+  gap:7px;
+}
+.product-icon-actions button{
+  flex:0 0 auto;
+  min-width:30px;
+  padding:0 1px;
+}
+.product-icon-actions .action-spacer{display:none}
+footer{
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  text-align:center;
+  width:100%;
+  padding:24px 12px 16px;
+}
+#privacy-link{display:inline-block;text-align:center}
+.seller-message-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:max-content;
+  max-width:100%;
+  margin-top:10px;
+  padding:8px 13px;
+  border:1px solid #555;
+  border-radius:8px;
+  background:#171717;
+  color:#f5f5f5;
+  text-decoration:none;
+  font-size:12px;
+  line-height:1.2;
+}
+.seller-message-button:hover{background:#242424}
+@media(min-width:701px){
+  .username-row{align-items:center}
+  .username-row h1{transform:translateY(10px)}
+  .username-row .icon-button{font-size:20px;align-self:center}
+}
+@media(max-width:700px){
+  .username-row{align-items:center;min-height:34px}
+  .username-row h1{transform:translateY(8px)}
+  .username-row .icon-button{font-size:20px;align-self:center}
+  .seller-message-button{margin-top:8px}
+  footer{padding-bottom:max(16px,env(safe-area-inset-bottom))}
+  .product-icon-actions{gap:5px}
+  .product-icon-actions button{min-width:28px;font-size:21px}
+}
