@@ -1,1 +1,61 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080808"><link rel="icon" type="image/png" href="./kamizeta.png"><title>Pagamento — Kamizeta</title><link rel="stylesheet" href="./style.css"></head><body><main class="app-shell"><h1>Pagamento da Kamizeta</h1><p>O retorno do checkout não confirma o pagamento. O status abaixo será atualizado quando o servidor validar a notificação da InfinitePay.</p><section id="payment-status">Consultando pedido…</section><button id="refresh-payment" class="primary">Atualizar status</button> <a href="./index.html">Voltar à loja</a></main><script type="module" src="./payment-complete.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080808">
+  <meta name="description" content="Consulte o status do pagamento do seu pedido na Kamizeta.">
+  <link rel="icon" type="image/png" href="./kamizeta.png">
+  <title>Status do pagamento — Kamizeta</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="payment-result-page">
+  <main class="payment-page">
+    <section class="payment-card" aria-labelledby="payment-heading">
+      <header class="payment-brand">
+        <img src="./kamizeta.png" alt="" width="42" height="42">
+        <div>
+          <span class="payment-brand-name">KAMIZETA</span>
+          <span class="payment-brand-caption">CONFIRMAÇÃO DO PEDIDO</span>
+        </div>
+      </header>
+
+      <div id="payment-status" class="payment-status-panel tone-loading" role="status" aria-live="polite">
+        <span id="payment-status-icon" class="payment-status-icon" aria-hidden="true">◷</span>
+        <div class="payment-status-copy">
+          <p class="payment-eyebrow">STATUS DO PAGAMENTO</p>
+          <h1 id="payment-heading">Consultando seu pagamento…</h1>
+          <p id="payment-description">Estamos verificando as informações do pedido.</p>
+        </div>
+      </div>
+
+      <section id="payment-details" class="payment-details" hidden aria-label="Detalhes do pedido">
+        <div class="payment-detail-row">
+          <span>Código do pedido</span>
+          <strong id="payment-order-nsu">—</strong>
+        </div>
+        <div class="payment-detail-row">
+          <span>Valor total</span>
+          <strong id="payment-total">—</strong>
+        </div>
+        <div class="payment-detail-row">
+          <span>Status do pedido</span>
+          <strong id="payment-order-status">—</strong>
+        </div>
+      </section>
+
+      <div class="payment-actions">
+        <button id="refresh-payment" class="primary payment-refresh" type="button">Atualizar status</button>
+        <a class="secondary payment-store-link" href="./index.html">Voltar à loja</a>
+      </div>
+
+      <p class="payment-security-note">
+        O redirecionamento do checkout não confirma, por si só, o pagamento. A confirmação aparece aqui depois da validação pelo servidor.
+      </p>
+    </section>
+
+    <p class="payment-page-footer">Precisa de ajuda? Entre em contato com a equipe da Kamizeta.</p>
+  </main>
+  <script type="module" src="./payment-complete.js"></script>
+</body>
+</html>
