@@ -242,3 +242,16 @@ textarea{min-height:96px;resize:vertical}
 .order-card{grid-template-columns:minmax(0,1fr) auto 18px}
 @media(max-width:760px){.order-card{grid-template-columns:minmax(0,1fr) auto 16px}}
 @media(max-width:410px){.order-card{grid-template-columns:minmax(0,1fr)}}
+
+
+/* Ações destrutivas para produtos e Stories */
+.danger-icon-button{color:#ffaaa8;border-color:#553330;background:#241716}
+.danger-icon-button:hover{color:#ffe4e3;border-color:#8b4742;background:#38201e}
+.product-card-actions{flex-direction:column}
+.delete-confirm-modal{width:min(480px,calc(100% - 24px))}
+.delete-confirm-message{margin:0;color:#d4d9d4;font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+.delete-confirm-modal .modal-footer{margin-top:24px}
+@media(max-width:760px){
+  .product-card-actions{gap:5px}
+  .product-card-actions .icon-button{width:34px;height:34px}
+}
