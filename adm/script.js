@@ -24,7 +24,8 @@ const icons = {
   box: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 4.5v9L12 21l-9-4.5v-9L12 3Z"/><path d="m3.5 7.5 8.5 4.3 8.5-4.3M12 12v9M7.5 5.3l9 4.4"/></svg>',
   truck: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="17.5" cy="18" r="1.5"/></svg>',
   pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
-  empty: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 5V3m8 2V3M4 10h16"/></svg>'
+  empty: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 5V3m8 2V3M4 10h16"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5"/></svg>'
 };
 
 function escapeHtml(value) {
@@ -463,6 +464,25 @@ async function saveProduct(event) {
   await listProducts();
 }
 
+async function deleteProduct(product) {
+  const name = String(product.name || "este produto");
+  if (!window.confirm('Tem certeza que deseja excluir "' + name + '"? Esta ação não pode ser desfeita.')) return;
+
+  const { error } = await supabase.from("products").delete().eq("id", product.id);
+  if (error) {
+    notify("Não foi possível excluir o produto. Ele pode estar vinculado a um pedido. " + error.message, true);
+    return;
+  }
+
+  const { error: imagesError } = await supabase.from("product_images").delete().eq("product_id", product.id);
+  if (imagesError) {
+    notify("Produto excluído, mas não foi possível limpar os registros das imagens: " + imagesError.message, true);
+  } else {
+    notify("Produto excluído com sucesso.");
+  }
+  await listProducts();
+}
+
 async function listProducts() {
   const { data, error } = await supabase
     .from("products")
@@ -499,12 +519,17 @@ function renderProductCards() {
       '<div class="product-meta"><span>' + escapeHtml(product.product_code || "Sem código") + "</span><span>" + escapeHtml(product.category || "Sem categoria") + "</span>" +
       '<span class="status-pill ' + (product.is_published ? "success" : "neutral") + '">' + (product.is_published ? "Publicado" : "Rascunho") + "</span></div>" +
       '<p class="product-price">' + money(product.price_cents) + "</p></div>" +
-      '<div class="product-card-actions"><button type="button" class="icon-button" data-edit-product="' + escapeHtml(product.id) + '" aria-label="Editar ' + escapeHtml(product.name) + '" title="Editar produto">' + icons.edit + "</button></div>" +
+      '<div class="product-card-actions"><button type="button" class="icon-button" data-edit-product="' + escapeHtml(product.id) + '" aria-label="Editar ' + escapeHtml(product.name) + '" title="Editar produto">' + icons.edit + "</button>" +
+      '<button type="button" class="icon-button danger-icon-button" data-delete-product="' + escapeHtml(product.id) + '" aria-label="Excluir ' + escapeHtml(product.name) + '" title="Excluir produto">' + icons.trash + "</button></div>" +
       "</article>";
   }).join("");
-  $$("[data-edit-product]", list).forEach(button => button.addEventListener("click", () => {
+  $("[data-edit-product]", list).forEach(button => button.addEventListener("click", () => {
     const product = cachedProducts.find(item => item.id === button.dataset.editProduct);
     openProductDialog(product || null);
+  }));
+  $("[data-delete-product]", list).forEach(button => button.addEventListener("click", () => {
+    const product = cachedProducts.find(item => item.id === button.dataset.deleteProduct);
+    if (product) withLoader(() => deleteProduct(product), "Excluindo produto…");
   }));
 }
 
@@ -602,10 +627,11 @@ async function listStories() {
       '<div><h3>' + escapeHtml(story.title || "Story sem título") + '</h3><p>' + escapeHtml(story.media_type === "image" ? "Imagem pública do Drive" : "YouTube Shorts") + " · " + (story.is_active ? "Ativo" : "Inativo") + "</p></div>" +
       '</div><div class="story-row-actions"><span class="status-pill ' + (story.is_active ? "success" : "neutral") + '">' + (story.is_active ? "Ativo" : "Inativo") + "</span>" +
       '<button type="button" class="icon-button" data-toggle-story="' + escapeHtml(story.id) + '" data-active="' + String(story.is_active) + '" aria-label="' + (story.is_active ? "Desativar story" : "Ativar story") + '" title="' + (story.is_active ? "Desativar" : "Ativar") + '">' +
-      (story.is_active ? icons.close : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>') + "</button></div></article>"
+      (story.is_active ? icons.close : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>') + "</button>" +
+      '<button type="button" class="icon-button danger-icon-button" data-delete-story="' + escapeHtml(story.id) + '" aria-label="Excluir story ' + escapeHtml(story.title || "") + '" title="Excluir story">' + icons.trash + "</button></div></article>"
   ).join("") : '<div class="empty-state">' + icons.image + "Nenhum story cadastrado." + "</div>";
 
-  $$("[data-toggle-story]").forEach(button => button.addEventListener("click", () => withLoader(async () => {
+  $("[data-toggle-story]").forEach(button => button.addEventListener("click", () => withLoader(async () => {
     const { error: updateError } = await supabase.from("stories")
       .update({ is_active: button.dataset.active !== "true" })
       .eq("id", button.dataset.toggleStory);
@@ -613,6 +639,16 @@ async function listStories() {
     else notify(button.dataset.active === "true" ? "Story desativado." : "Story ativado.");
     await listStories();
   }, "Atualizando story…")));
+
+  $("[data-delete-story]").forEach(button => button.addEventListener("click", () => withLoader(async () => {
+    const story = cachedStories.find(item => item.id === button.dataset.deleteStory);
+    if (!story) return;
+    if (!window.confirm('Tem certeza que deseja excluir o story "' + String(story.title || "sem título") + '"? Esta ação não pode ser desfeita.')) return;
+    const { error: deleteError } = await supabase.from("stories").delete().eq("id", story.id);
+    if (deleteError) notify("Não foi possível excluir o story: " + deleteError.message, true);
+    else notify("Story excluído com sucesso.");
+    await listStories();
+  }, "Excluindo story…")));
 }
 
 async function renderOrdersPanel() {
