@@ -18,6 +18,7 @@ const icons = {
   search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>',
   filter: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
   edit: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5 5 5M4 20l4.2-.8L19 8.4a2.1 2.1 0 0 0-3-3L5.2 16.2 4 20Z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6.5h17M9 6.5V4h6v2.5M6.5 6.5l1 14h9l1-14M10 10v7M14 10v7"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>',
   chevron: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>',
   image: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg>',
@@ -78,6 +79,35 @@ function notify(message, error = false) {
 function closeModal(id) {
   const dialog = $("#" + id);
   if (dialog?.open) dialog.close();
+}
+
+function confirmDelete({ title, message, confirmLabel = "Excluir" }) {
+  const dialog = $("#delete-confirm-dialog");
+  $("#delete-confirm-title").textContent = title;
+  $("#delete-confirm-message").textContent = message;
+  $("#delete-confirm-accept").textContent = confirmLabel;
+
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = accepted => {
+      if (settled) return;
+      settled = true;
+      if (dialog.open) dialog.close();
+      resolve(accepted);
+    };
+
+    $("#delete-confirm-accept").onclick = () => finish(true);
+    $("#delete-confirm-cancel").onclick = () => finish(false);
+    $("#delete-confirm-close").onclick = () => finish(false);
+    dialog.addEventListener("cancel", () => {
+      if (!settled) {
+        settled = true;
+        resolve(false);
+      }
+    }, { once: true });
+
+    dialog.showModal();
+  });
 }
 
 function statusLabel(status) {
@@ -499,12 +529,33 @@ function renderProductCards() {
       '<div class="product-meta"><span>' + escapeHtml(product.product_code || "Sem código") + "</span><span>" + escapeHtml(product.category || "Sem categoria") + "</span>" +
       '<span class="status-pill ' + (product.is_published ? "success" : "neutral") + '">' + (product.is_published ? "Publicado" : "Rascunho") + "</span></div>" +
       '<p class="product-price">' + money(product.price_cents) + "</p></div>" +
-      '<div class="product-card-actions"><button type="button" class="icon-button" data-edit-product="' + escapeHtml(product.id) + '" aria-label="Editar ' + escapeHtml(product.name) + '" title="Editar produto">' + icons.edit + "</button></div>" +
+      '<div class="product-card-actions"><button type="button" class="icon-button" data-edit-product="' + escapeHtml(product.id) + '" aria-label="Editar ' + escapeHtml(product.name) + '" title="Editar produto">' + icons.edit + "</button>" +
+      '<button type="button" class="icon-button danger-icon-button" data-delete-product="' + escapeHtml(product.id) + '" aria-label="Excluir ' + escapeHtml(product.name) + '" title="Excluir produto">' + icons.trash + "</button></div>" +
       "</article>";
   }).join("");
-  $$("[data-edit-product]", list).forEach(button => button.addEventListener("click", () => {
+  $("[data-edit-product]", list).forEach(button => button.addEventListener("click", () => {
     const product = cachedProducts.find(item => item.id === button.dataset.editProduct);
     openProductDialog(product || null);
+  }));
+  $("[data-delete-product]", list).forEach(button => button.addEventListener("click", async () => {
+    const product = cachedProducts.find(item => item.id === button.dataset.deleteProduct);
+    if (!product) return;
+    const accepted = await confirmDelete({
+      title: "Excluir produto?",
+      message: 'Deseja excluir "' + product.name + '"? A imagem vinculada ao produto será removida da lista, itens já registrados no histórico dos pedidos serão preservados sem vínculo com o cadastro do produto. Esta ação não pode ser desfeita.',
+      confirmLabel: "Excluir produto"
+    });
+    if (!accepted) return;
+    await withLoader(async () => {
+      const { error } = await supabase.from("products").delete().eq("id", product.id);
+      if (error) {
+        notify("Não foi possível excluir o produto: " + error.message, true);
+        return;
+      }
+      cachedProducts = cachedProducts.filter(item => item.id !== product.id);
+      notify("Produto excluído com sucesso.");
+      renderProductCards();
+    }, "Excluindo produto…");
   }));
 }
 
@@ -602,10 +653,11 @@ async function listStories() {
       '<div><h3>' + escapeHtml(story.title || "Story sem título") + '</h3><p>' + escapeHtml(story.media_type === "image" ? "Imagem pública do Drive" : "YouTube Shorts") + " · " + (story.is_active ? "Ativo" : "Inativo") + "</p></div>" +
       '</div><div class="story-row-actions"><span class="status-pill ' + (story.is_active ? "success" : "neutral") + '">' + (story.is_active ? "Ativo" : "Inativo") + "</span>" +
       '<button type="button" class="icon-button" data-toggle-story="' + escapeHtml(story.id) + '" data-active="' + String(story.is_active) + '" aria-label="' + (story.is_active ? "Desativar story" : "Ativar story") + '" title="' + (story.is_active ? "Desativar" : "Ativar") + '">' +
-      (story.is_active ? icons.close : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>') + "</button></div></article>"
+      (story.is_active ? icons.close : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>') + "</button>" +
+      '<button type="button" class="icon-button danger-icon-button" data-delete-story="' + escapeHtml(story.id) + '" aria-label="Excluir story ' + escapeHtml(story.title || "") + '" title="Excluir story">' + icons.trash + "</button></div></article>"
   ).join("") : '<div class="empty-state">' + icons.image + "Nenhum story cadastrado." + "</div>";
 
-  $$("[data-toggle-story]").forEach(button => button.addEventListener("click", () => withLoader(async () => {
+  $("[data-toggle-story]").forEach(button => button.addEventListener("click", () => withLoader(async () => {
     const { error: updateError } = await supabase.from("stories")
       .update({ is_active: button.dataset.active !== "true" })
       .eq("id", button.dataset.toggleStory);
@@ -613,6 +665,27 @@ async function listStories() {
     else notify(button.dataset.active === "true" ? "Story desativado." : "Story ativado.");
     await listStories();
   }, "Atualizando story…")));
+
+  $("[data-delete-story]").forEach(button => button.addEventListener("click", async () => {
+    const story = cachedStories.find(item => item.id === button.dataset.deleteStory);
+    if (!story) return;
+    const accepted = await confirmDelete({
+      title: "Excluir story?",
+      message: 'Deseja excluir "' + (story.title || "Story sem título") + '" permanentemente? Ele deixará de aparecer na loja. Esta ação não pode ser desfeita.',
+      confirmLabel: "Excluir story"
+    });
+    if (!accepted) return;
+    await withLoader(async () => {
+      const { error } = await supabase.from("stories").delete().eq("id", story.id);
+      if (error) {
+        notify("Não foi possível excluir o story: " + error.message, true);
+        return;
+      }
+      cachedStories = cachedStories.filter(item => item.id !== story.id);
+      notify("Story excluído com sucesso.");
+      await listStories();
+    }, "Excluindo story…");
+  }));
 }
 
 async function renderOrdersPanel() {
