@@ -63,10 +63,14 @@ function renderProfileSummary(profile,user){
   if(root)root.innerHTML=rows.map(([label,value])=>'<p class="profile-summary-row"><span>'+escapeHTML(label)+'</span><b>'+escapeHTML(value)+'</b></p>').join('');
 }
 const terminalOrderStatuses=new Set(['cancelled','canceled','completed','delivered','refunded','failed','closed']);
+const orderStatusLabels={created:'Pedido criado',awaiting_payment:'Aguardando pagamento',paid_pending_seller:'Pagamento recebido',in_progress:'Em preparação',shipped:'Enviado',completed:'Recebido',delivered:'Entregue',cancelled:'Cancelado',canceled:'Cancelado',refunded:'Estornado'};
+const paymentStatusLabels={pending:'Pendente',paid:'Pago',settled:'Pago',cancelled:'Cancelado',refunded:'Estornado',failed:'Não aprovado'};
 function orderCard(o){
   const items=(o.order_items||[]).map(i=>'<p class="muted">'+escapeHTML(i.product_name)+' · '+i.quantity+'x · '+escapeHTML(i.size)+' · '+money(i.unit_price_cents*i.quantity)+'</p>').join('');
-  const cancel=['awaiting_payment','created'].includes(String(o.order_status||'').toLowerCase())?'<button type="button" class="secondary" data-cancel-order="'+escapeHTML(o.id)+'">Cancelar pedido</button>':'';
-  return '<article class="profile-order"><div class="profile-order-top"><b>Pedido '+escapeHTML(o.order_nsu||'')+'</b><strong>'+money(o.total_cents)+'</strong></div><p>Pedido: '+escapeHTML(o.order_status)+' · Pagamento: '+escapeHTML(o.payment_status)+'</p><p class="muted">'+(o.created_at?new Date(o.created_at).toLocaleString('pt-BR'):'')+' · '+(o.fulfillment_method==='delivery'?'Entrega':'Retirada')+'</p>'+items+cancel+'</article>';
+  const orderStatus=String(o.order_status||'').toLowerCase(),paymentStatus=String(o.payment_status||'').toLowerCase();
+  const cancel=['awaiting_payment','created'].includes(orderStatus)&&paymentStatus==='pending'?'<button type="button" class="secondary" data-cancel-order="'+escapeHTML(o.id)+'">Cancelar pedido</button>':'';
+  const confirmReceived=orderStatus==='shipped'&&['paid','settled'].includes(paymentStatus)?'<button type="button" class="primary" data-confirm-received="'+escapeHTML(o.id)+'">Confirmar recebimento</button>':'';
+  return '<article class="profile-order"><div class="profile-order-top"><b>Pedido '+escapeHTML(o.order_nsu||'')+'</b><strong>'+money(o.total_cents)+'</strong></div><p>Pedido: <b>'+escapeHTML(orderStatusLabels[orderStatus]||orderStatus||'Não informado')+'</b> · Pagamento: <b>'+escapeHTML(paymentStatusLabels[paymentStatus]||paymentStatus||'Não informado')+'</b></p><p class="muted">'+(o.created_at?new Date(o.created_at).toLocaleString('pt-BR'):'')+' · '+(o.fulfillment_method==='delivery'?'Entrega':'Retirada')+'</p>'+items+cancel+confirmReceived+'</article>';
 }
 
 export async function renderProfile(el){
@@ -91,7 +95,28 @@ export async function renderProfile(el){
     const orders=ordersResult.data||[];
     const currentOrders=orders.filter(o=>!terminalOrderStatuses.has(String(o.order_status||'').toLowerCase())&&!terminalOrderStatuses.has(String(o.payment_status||'').toLowerCase()));
     const historyOrders=orders.filter(o=>!currentOrders.includes(o));
-    const displayOrders=view=>{const list=view==='history'?historyOrders:currentOrders;ordersList.innerHTML=list.length?list.map(orderCard).join(''):'<p class="muted">'+(view==='history'?'Você ainda não tem pedidos anteriores.':'Você não tem pedidos em andamento.')+'</p>';ordersList.querySelectorAll('[data-cancel-order]').forEach(btn=>btn.onclick=async()=>{btn.disabled=true;showLoader('Cancelando pedido…');try{const{data,error}=await supabase.functions.invoke('cancel-order',{body:{order_id:btn.dataset.cancelOrder}});if(error){let info={};try{info=await error.context.json()}catch{}throw new Error(info.message||info.error||'Não foi possível cancelar o pedido.')}toast('Pedido cancelado.');await renderProfile(el)}catch(e){toast(e.message||'Não foi possível cancelar o pedido.');btn.disabled=false}finally{hideLoader()}})};
+    const displayOrders=view=>{
+      const list=view==='history'?historyOrders:currentOrders;
+      ordersList.innerHTML=list.length?list.map(orderCard).join(''):'<p class="muted">'+(view==='history'?'Você ainda não tem pedidos anteriores.':'Você não tem pedidos em andamento.')+'</p>';
+      ordersList.querySelectorAll('[data-cancel-order]').forEach(btn=>btn.onclick=async()=>{
+        btn.disabled=true;showLoader('Cancelando pedido…');
+        try{
+          const{data,error}=await supabase.functions.invoke('cancel-order',{body:{order_id:btn.dataset.cancelOrder}});
+          if(error){let info={};try{info=await error.context.json()}catch{}throw new Error(info.message||info.error||'Não foi possível cancelar o pedido.')}
+          toast('Pedido cancelado.');await renderProfile(el);
+        }catch(e){toast(e.message||'Não foi possível cancelar o pedido.');btn.disabled=false}
+        finally{hideLoader()}
+      });
+      ordersList.querySelectorAll('[data-confirm-received]').forEach(btn=>btn.onclick=async()=>{
+        btn.disabled=true;showLoader('Confirmando recebimento…');
+        try{
+          const{data,error}=await supabase.functions.invoke('confirm-order-received',{body:{order_id:btn.dataset.confirmReceived}});
+          if(error){let info={};try{info=await error.context.json()}catch{}throw new Error(info.message||info.error||'Não foi possível confirmar o recebimento.')}
+          toast('Recebimento confirmado. Obrigado pela compra!');await renderProfile(el);
+        }catch(e){toast(e.message||'Não foi possível confirmar o recebimento.');btn.disabled=false}
+        finally{hideLoader()}
+      });
+    };
     displayOrders('current');
     el.querySelectorAll('[data-orders-view]').forEach(btn=>btn.onclick=()=>{el.querySelectorAll('[data-orders-view]').forEach(b=>b.classList.toggle('active',b===btn));displayOrders(btn.dataset.ordersView)});
     if(wishesResult.error)throw wishesResult.error;
