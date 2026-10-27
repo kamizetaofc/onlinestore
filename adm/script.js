@@ -523,11 +523,11 @@ function renderProductCards() {
       '<button type="button" class="icon-button danger-icon-button" data-delete-product="' + escapeHtml(product.id) + '" aria-label="Excluir ' + escapeHtml(product.name) + '" title="Excluir produto">' + icons.trash + "</button></div>" +
       "</article>";
   }).join("");
-  $("[data-edit-product]", list).forEach(button => button.addEventListener("click", () => {
+  $$("[data-edit-product]", list).forEach(button => button.addEventListener("click", () => {
     const product = cachedProducts.find(item => item.id === button.dataset.editProduct);
     openProductDialog(product || null);
   }));
-  $("[data-delete-product]", list).forEach(button => button.addEventListener("click", () => {
+  $$("[data-delete-product]", list).forEach(button => button.addEventListener("click", () => {
     const product = cachedProducts.find(item => item.id === button.dataset.deleteProduct);
     if (product) withLoader(() => deleteProduct(product), "Excluindo produto…");
   }));
@@ -631,7 +631,7 @@ async function listStories() {
       '<button type="button" class="icon-button danger-icon-button" data-delete-story="' + escapeHtml(story.id) + '" aria-label="Excluir story ' + escapeHtml(story.title || "") + '" title="Excluir story">' + icons.trash + "</button></div></article>"
   ).join("") : '<div class="empty-state">' + icons.image + "Nenhum story cadastrado." + "</div>";
 
-  $("[data-toggle-story]").forEach(button => button.addEventListener("click", () => withLoader(async () => {
+  $$("[data-toggle-story]").forEach(button => button.addEventListener("click", () => withLoader(async () => {
     const { error: updateError } = await supabase.from("stories")
       .update({ is_active: button.dataset.active !== "true" })
       .eq("id", button.dataset.toggleStory);
@@ -640,7 +640,7 @@ async function listStories() {
     await listStories();
   }, "Atualizando story…")));
 
-  $("[data-delete-story]").forEach(button => button.addEventListener("click", () => withLoader(async () => {
+  $$("[data-delete-story]").forEach(button => button.addEventListener("click", () => withLoader(async () => {
     const story = cachedStories.find(item => item.id === button.dataset.deleteStory);
     if (!story) return;
     if (!window.confirm('Tem certeza que deseja excluir o story "' + String(story.title || "sem título") + '"? Esta ação não pode ser desfeita.')) return;
