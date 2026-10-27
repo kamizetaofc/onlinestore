@@ -242,3 +242,17 @@ textarea{min-height:96px;resize:vertical}
 .order-card{grid-template-columns:minmax(0,1fr) auto 18px}
 @media(max-width:760px){.order-card{grid-template-columns:minmax(0,1fr) auto 16px}}
 @media(max-width:410px){.order-card{grid-template-columns:minmax(0,1fr)}}
+
+
+/* Ações destrutivas de produtos e stories */
+.danger-icon-button{
+  color:#ffb5b0;
+  border-color:#593330;
+  background:#261716;
+}
+.danger-icon-button:hover{
+  color:#fff0ef;
+  border-color:#8a4a45;
+  background:#3a201e;
+}
+.story-row-actions .icon-button{flex:0 0 auto}
