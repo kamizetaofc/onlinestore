@@ -427,13 +427,17 @@ async function refresh({ quiet = false } = {}) {
       .maybeSingle();
 
     if (error || !data) {
-      details.hidden = true;
-      showStatus({
-        title: "Não conseguimos localizar seu pedido",
-        description: "Confira se você está conectado à conta usada na compra e tente atualizar o status novamente.",
-        tone: "neutral",
-        icon: "i",
-      });
+      if (!quiet) {
+        details.hidden = true;
+        showStatus({
+          title: "Não conseguimos localizar seu pedido",
+          description: "Confira se você está conectado à conta usada na compra e tente atualizar o status novamente.",
+          tone: "neutral",
+          icon: "i",
+        });
+      } else {
+        scheduleAutomaticStatusCheck();
+      }
       return;
     }
 
