@@ -143,7 +143,7 @@ function driveFileIdFromUrl(rawUrl) {
   try {
     const url = new URL(String(rawUrl || "").trim());
     const host = url.hostname.toLowerCase();
-    if (!host.endsWith("google.com") && !host.endsWith("googleusercontent.com")) return null;
+    if (host !== "drive.google.com" && !host.endsWith(".googleusercontent.com")) return null;
     const pathMatch = url.pathname.match(/\/d\/([a-zA-Z0-9_-]+)/);
     const id = pathMatch?.[1] || url.searchParams.get("id");
     return id && /^[a-zA-Z0-9_-]+$/.test(id) ? id : null;
