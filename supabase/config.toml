@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.cancel-order]
 verify_jwt = true
+
+[functions.confirm-order-received]
+verify_jwt = true
