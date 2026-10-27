@@ -141,7 +141,7 @@ export async function startCheckout(el){
   }
   function contactLink(reason,address){
     const message='Olá! Gostaria de consultar a entrega para meu pedido: '+summary+'. Endereço: '+Object.values(address).filter(Boolean).join(', ');
-    return '<p>'+escapeHTML(reason)+' Entre em contato para combinar a entrega.</p><a class="primary shipping-whatsapp-link" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent(message)+'">Consultar pelo WhatsApp</a>';
+    return '<p>'+escapeHTML(reason)+' Entre em contato para combinar a entrega.</p><a class="primary shipping-whatsapp-link" target="_blank" rel="noopener" href="https://wa.me/5584920039738?text='+encodeURIComponent(message)+'">Consultar pelo WhatsApp</a>';
   }
   function calculateShipping(){
     shippingCalculated=false;
