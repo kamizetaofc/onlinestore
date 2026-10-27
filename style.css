@@ -677,3 +677,25 @@ body.payment-result-page{
   .payment-actions{grid-template-columns:1fr}
   .payment-security-note{margin-top:18px}
 }
+
+
+/* Invoice PDF: ação e aviso de download */
+.payment-download-invoice{
+  display:block;
+  width:100%;
+  min-height:48px;
+  margin-top:22px;
+  border-radius:10px;
+  background:#e6eee8;
+  border-color:#e6eee8;
+  color:#111713;
+  font-weight:750;
+}
+.payment-download-invoice:hover{background:#d2e2d6}
+.invoice-download-feedback{
+  margin:10px 0 0;
+  color:#aeb8b0;
+  font-size:12px;
+  line-height:1.55;
+  text-align:center;
+}
