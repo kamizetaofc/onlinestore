@@ -59,6 +59,20 @@
         <div id="admin-panel"></div>
       </section>
 
+      <dialog id="delete-confirm-dialog" class="admin-modal delete-confirm-modal" aria-labelledby="delete-confirm-title">
+        <header class="modal-header">
+          <div><p>CONFIRMAR AÇÃO</p><h2 id="delete-confirm-title">Excluir item?</h2></div>
+          <button type="button" class="icon-button" id="delete-confirm-close" aria-label="Fechar">×</button>
+        </header>
+        <div class="modal-body">
+          <p id="delete-confirm-message" class="delete-confirm-message">Esta ação não pode ser desfeita.</p>
+          <div class="modal-footer">
+            <button type="button" class="secondary-button" id="delete-confirm-cancel">Cancelar</button>
+            <button type="button" class="danger-button" id="delete-confirm-accept">Excluir</button>
+          </div>
+        </div>
+      </dialog>
+
       <p id="status" class="admin-status" role="status" aria-live="polite"></p>
       <div id="admin-loader" class="admin-loader" hidden role="status" aria-live="polite">
         <img src="/loader.gif" alt="">
