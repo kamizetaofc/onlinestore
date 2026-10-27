@@ -53,12 +53,16 @@ function showAdminLoader(message = "CARREGANDO...") {
   adminLoaderCount += 1;
   $("[data-loader-message]", loader).textContent = message;
   loader.hidden = false;
+  if (!loader.open) loader.showModal();
 }
 
 function hideAdminLoader() {
   const loader = $("#admin-loader");
   adminLoaderCount = Math.max(0, adminLoaderCount - 1);
-  if (loader && adminLoaderCount === 0) loader.hidden = true;
+  if (loader && adminLoaderCount === 0) {
+    if (loader.open) loader.close();
+    loader.hidden = true;
+  }
 }
 
 async function withLoader(callback, message) {
@@ -70,10 +74,19 @@ async function withLoader(callback, message) {
   }
 }
 
+let adminStatusTimer = null;
+
 function notify(message, error = false) {
   const status = $("#status");
+  if (adminStatusTimer) clearTimeout(adminStatusTimer);
   status.textContent = message;
   status.classList.toggle("error", error);
+  if (!message) return;
+  adminStatusTimer = setTimeout(() => {
+    status.textContent = "";
+    status.classList.remove("error");
+    adminStatusTimer = null;
+  }, 1000);
 }
 
 function closeModal(id) {
