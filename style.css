@@ -699,3 +699,58 @@ body.payment-result-page{
   line-height:1.55;
   text-align:center;
 }
+
+
+/* Ajustes finos de checkout, destaques e página de produto */
+@media(max-width:700px){
+  #page-view:has(#checkout-form){padding:0 16px 24px}
+  #page-view:has(#checkout-form)>h2,
+  #page-view:has(#checkout-form)>p{margin-left:0;margin-right:0}
+  #checkout-form .field{margin:14px 0}
+  #checkout-form .checkout-buttons{display:grid;grid-template-columns:1fr;gap:10px}
+  #checkout-form .checkout-buttons button{width:100%;min-height:44px}
+}
+.shipping-whatsapp-link{display:block;width:max-content;max-width:100%;margin:12px auto 0;text-align:center;text-decoration:none}
+#shipping-result>p{text-align:center;line-height:1.5}
+.category-story-dialog{width:min(560px,calc(100% - 24px));max-height:90dvh;padding:18px;overflow:auto}
+.category-story-dialog article{padding-top:2px}
+.category-story-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 34px 10px 0}
+.category-story-header h2{margin:0;font-size:19px}
+.category-story-header p{margin:0 0 4px;font-size:10px;letter-spacing:.12em}
+.category-story-count{font-size:12px;color:var(--muted);white-space:nowrap}
+.category-story-progress{display:flex;gap:4px;margin:0 0 12px}
+.category-story-progress span{height:3px;flex:1;border-radius:8px;background:#484848}
+.category-story-progress span.seen{background:#f5f5f5}
+.category-story-media{position:relative;display:grid;place-items:center;min-height:180px;background:#111;border-radius:10px;overflow:hidden;touch-action:pan-y}
+.category-story-media>img{display:block;width:100%;height:min(58dvh,520px);object-fit:contain}
+.category-story-media .category-product-placeholder{min-height:280px}
+.category-story-product{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 2px 2px}
+.category-story-product>div{min-width:0}
+.category-story-product b{display:block;overflow-wrap:anywhere}
+.category-story-product p{margin:5px 0 0;color:#aaa;font-size:12px;line-height:1.4;max-height:3.5em;overflow:hidden}
+.category-story-product .category-view-product{flex:0 0 auto;width:auto;margin:0;white-space:nowrap}
+.product-page-header{display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:0 12px}
+.product-page-header .product-back{flex:0 0 auto;margin:0;padding:6px 8px}
+.product-page-header .product-activity-header{padding:0}
+.product-icon-actions{justify-content:space-between;gap:8px}
+.product-icon-actions .action-spacer{display:none}
+.product-icon-actions button{flex:1;min-width:0}
+.comment-sheet-header{display:flex;align-items:center;gap:10px;padding:2px 4px 16px;border-bottom:1px solid #333}
+.comment-sheet-header img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#fff}
+.comment-sheet-header b{font-size:14px}
+.comment-description-bubble{margin-top:16px;padding:14px 16px;border-radius:16px;background:#262626;color:#fff}
+.comment-description-bubble p{margin:0;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+#info-dialog:has(.product-description-modal){position:fixed;inset:auto 0 0;width:100%;max-width:none;height:min(52dvh,520px);max-height:60dvh;margin:0;border:1px solid #363636;border-bottom:0;border-radius:18px 18px 0 0;padding:22px 18px max(18px,env(safe-area-inset-bottom));overflow:auto;animation:comment-sheet-enter .22s ease-out}
+#info-dialog:has(.product-description-modal)::backdrop{background:#0009}
+#info-dialog:has(.product-description-modal) article{clear:both;padding-top:0}
+#info-dialog:has(.product-description-modal) .modal-close{position:sticky;top:0;float:right;z-index:2;margin:-8px -6px 0 0}
+@keyframes comment-sheet-enter{from{transform:translateY(28px);opacity:.7}to{transform:translateY(0);opacity:1}}
+@media(max-width:700px){
+  .category-story-dialog{width:100%;max-width:none;max-height:92dvh;margin:auto 0 0;border-radius:18px 18px 0 0;padding:18px 14px max(18px,env(safe-area-inset-bottom))}
+  .category-story-media>img{height:min(52dvh,460px)}
+  .category-story-product{align-items:flex-start;flex-direction:column}
+  .category-story-product .category-view-product{width:100%}
+  .product-icon-actions{gap:4px}
+  .product-icon-actions button{font-size:22px}
+  #info-dialog:has(.product-description-modal){height:52dvh;max-height:60dvh}
+}
