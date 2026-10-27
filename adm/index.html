@@ -1,1 +1,71 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" type="image/png" href="/kamizeta.png"><title>Administração Kamizeta</title><link rel="stylesheet" href="/adm/style.css"></head><body><main class="admin"><a href="/">← Loja</a><h1>Kamizeta · Administração</h1><section id="admin-login"><h2>Entrar</h2><form id="login-form"><label>E-mail<input name="email" type="email" required></label><label>Senha<input name="password" type="password" required></label><button>Entrar</button></form></section><section id="admin-app" hidden><nav><button data-panel="products">Produtos</button><button data-panel="stories">Stories</button><button data-panel="orders">Pedidos</button><button id="logout">Sair</button></nav><div id="admin-panel"></div></section><p id="status" class="admin-status" role="status" aria-live="polite"></p><div id="admin-loader" class="admin-loader" hidden role="status" aria-live="polite"><img src="/loader.gif" alt=""><span data-loader-message>CARREGANDO...</span></div> </main><script type="module" src="/adm/script.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080808">
+  <link rel="icon" type="image/png" href="/kamizeta.png">
+  <title>Administração — Kamizeta</title>
+  <link rel="stylesheet" href="/adm/style.css">
+</head>
+<body>
+  <div class="admin-shell">
+    <aside id="admin-sidebar" class="admin-sidebar" hidden>
+      <a class="admin-brand" href="/" aria-label="Kamizeta — voltar à loja" title="Voltar à loja">
+        <img src="/kamizeta.png" alt="">
+      </a>
+
+      <nav class="admin-navigation" aria-label="Navegação do painel">
+        <button type="button" data-panel="products" aria-label="Produtos" title="Produtos" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.3"/><rect x="14" y="4" width="6" height="6" rx="1.3"/><rect x="4" y="14" width="6" height="6" rx="1.3"/><rect x="14" y="14" width="6" height="6" rx="1.3"/></svg>
+          <span class="sr-only">Produtos</span>
+        </button>
+        <button type="button" data-panel="stories" aria-label="Stories" title="Stories">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="4"/><circle cx="12" cy="12" r="3.2"/><circle cx="16.8" cy="7.7" r=".8" class="icon-fill"/></svg>
+          <span class="sr-only">Stories</span>
+        </button>
+        <button type="button" data-panel="orders" aria-label="Pedidos" title="Pedidos">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v15H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          <span class="sr-only">Pedidos</span>
+        </button>
+      </nav>
+
+      <div class="admin-navigation-bottom">
+        <a href="/" aria-label="Voltar à loja" title="Voltar à loja">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 10.5 8.5-7 8.5 7"/><path d="M5.5 9.5v11h13v-11M9.5 20.5v-7h5v7"/></svg>
+          <span class="sr-only">Voltar à loja</span>
+        </a>
+        <button type="button" id="logout" aria-label="Sair da conta" title="Sair da conta">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H10"/><path d="M14 8l4 4-4 4M8 12h10"/></svg>
+          <span class="sr-only">Sair</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <section id="admin-login" class="login-card">
+        <img src="/kamizeta.png" alt="" class="login-logo">
+        <p class="eyebrow">ÁREA RESTRITA</p>
+        <h1>Entrar no painel</h1>
+        <p class="login-description">Acesse para gerenciar produtos, stories e pedidos.</p>
+        <form id="login-form">
+          <label>E-mail<input name="email" type="email" autocomplete="username" required></label>
+          <label>Senha<input name="password" type="password" autocomplete="current-password" required></label>
+          <button class="primary-button" type="submit">Entrar</button>
+        </form>
+      </section>
+
+      <section id="admin-app" hidden>
+        <div id="admin-panel"></div>
+      </section>
+
+      <p id="status" class="admin-status" role="status" aria-live="polite"></p>
+      <div id="admin-loader" class="admin-loader" hidden role="status" aria-live="polite">
+        <img src="/loader.gif" alt="">
+        <span data-loader-message>CARREGANDO...</span>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="/adm/script.js"></script>
+</body>
+</html>
