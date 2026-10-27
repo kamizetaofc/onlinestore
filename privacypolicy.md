@@ -8,6 +8,7 @@ Ao utilizar nossos serviços, você concorda com as práticas descritas neste do
 
 
 ## 1. Informações que Coletamos
+
 Para que a sua experiência de compra seja eficiente e possamos cumprir com nossos compromissos operacionais e legais, coletamos apenas os dados estritamente necessários:
 - **Dados de Cadastro e Identificação:** Nome completo, CPF, e-mail e número de telefone.
 - **Dados de Entrega e Contato:** Endereço postal completo para o envio dos produtos.
@@ -16,6 +17,7 @@ Para que a sua experiência de compra seja eficiente e possamos cumprir com noss
 
 
 ## 2. Como Utilizamos os Seus Dados
+
 As informações coletadas são utilizadas exclusivamente para os seguintes fins:
 - **Processamento de Pedidos:** Viabilizar a produção sob demanda (*print on demand*), embalagem e o envio correto das suas camisetas.
 - **Atendimento ao Cliente:** Responder a dúvidas, prestar suporte pós-venda, resolver eventuais problemas e manter contato sobre o status do pedido.
@@ -24,6 +26,7 @@ As informações coletadas são utilizadas exclusivamente para os seguintes fins
 
 
 ## 3. Compartilhamento e Tratamento Seguro de Dados
+
 A KamiZeta adota rigorosos padrões técnicos e administrativos de segurança para proteger os seus dados contra acessos não autorizados, vazamentos ou alterações indevidas.
 
 Suas informações trafegam e são processadas com criptografia e protocolos de segurança avançados:
@@ -33,11 +36,13 @@ Suas informações trafegam e são processadas com criptografia e protocolos de 
 
 
 ## 4. Retenção e Armazenamento de Dados
+
 - Os seus dados pessoais serão mantidos armazenados apenas pelo período necessário para cumprir as finalidades para os quais foram coletados, incluindo o atendimento de obrigações legais, fiscais ou contratuais.
 - Nossas ferramentas de suporte interno e armazenamento em nuvem operam estritamente para gestão de inventário e informações de produtos, **não** armazenando dados de identificação pessoal de clientes.
 
 
 ## 5. Os Seus Direitos (LGPD)
+
 Em conformidade com a Lei Geral de Proteção de Dados (LGPD), você, na qualidade de titular dos dados, tem o direito de solicitar a qualquer momento:
 - Confirmação da existência de tratamento de dados.
 - Acesso aos dados que possuímos sobre você.
@@ -47,9 +52,11 @@ Em conformidade com a Lei Geral de Proteção de Dados (LGPD), você, na qualida
 
 
 ## 6. Alterações nesta Política
+
 Esta Política de Privacidade poderá ser atualizada periodicamente para refletir melhorias tecnológicas, mudanças operacionais ou adequações legais. Recomendamos que você consulte esta página regularmente.
 
 
 ## 7. Contato
+
 Caso tenha dúvidas, precise de esclarecimentos ou queira exercer os seus direitos referentes à privacidade e proteção de dados, entre em contato conosco pelo telefone/WhatsApp:
 - **Telefone / WhatsApp:** (84) 92003-9738
